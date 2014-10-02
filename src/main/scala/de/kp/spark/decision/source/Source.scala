@@ -1,4 +1,4 @@
-package de.kp.spark.decision.util
+package de.kp.spark.decision.source
 /* Copyright (c) 2014 Dr. Krusche & Partner PartG
  * 
  * This file is part of the Spark-Decision project
@@ -18,35 +18,13 @@ package de.kp.spark.decision.util
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import de.kp.spark.decision.Configuration
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
-import scala.xml._
-import scala.collection.mutable.ArrayBuffer
+import de.kp.spark.decision.model._
 
-object FeatureSpec {
+abstract class Source(@transient sc:SparkContext) extends Serializable {
 
-  private val (base,file) = Configuration.tree
-  
-  private val names = ArrayBuffer.empty[String]
-  private val types = ArrayBuffer.empty[String]
-  
-  private val info = XML.load(file)
-  
-  /*
-   * Read the XML (info file) to extract the
-   * feature names and also their types
-   */
-  for (att <- info \ "attribute") {
-     
-    names += att.text
-    /* 
-     * The type is either 'C' for categorical or 'N'
-     * for numerical features
-     */
-    types += (att \ "@type").toString
-     
-  }
+  def connect(params:Map[String,Any] = Map.empty[String,Any]):RDD[Instance]
 
-  def get() = (names,types)
-  
 }

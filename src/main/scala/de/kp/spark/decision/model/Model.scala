@@ -115,8 +115,6 @@ object DecisionStatus {
   val STARTED:String = "started"
   val FINISHED:String = "finished"
   
-  val TREES:String = "trees"
-  
   val FAILURE:String = "failure"
   val SUCCESS:String = "success"
     

@@ -106,10 +106,14 @@ object Configuration {
 
   }
   
-  def tree():String = {
+  def tree():(String,String) = {
   
     val cfg = config.getConfig("tree")
-    cfg.getString("info")   
+    
+    val info = cfg.getString("info")      
+    val base = cfg.getString("base")   
+    
+    (base,info)
     
   }
   
