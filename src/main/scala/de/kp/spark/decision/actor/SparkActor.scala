@@ -1,4 +1,4 @@
-package de.kp.spark.markov.actor
+package de.kp.spark.decision.actor
 /* Copyright (c) 2014 Dr. Krusche & Partner PartG
  * 
  * This file is part of the Spark-Decision project

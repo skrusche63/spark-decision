@@ -66,7 +66,17 @@ object Serializer {
   def deserializeRequest(request:String):ServiceRequest = read[ServiceRequest](request)
   
 }
+object Algorithms {
+  /* The value of the algorithms actually supported */
+  val RF:String = "RF"
+}
 
+object Sources {
+  /* The names of the data source actually supported */
+  val FILE:String    = "FILE"
+  val ELASTIC:String = "ELASTIC" 
+  val JDBC:String    = "JDBC"    
+}
 
 object Messages {
 
@@ -77,6 +87,8 @@ object Messages {
   def MISSING_FEATURES(uid:String):String = String.format("""Features are missing for uid '%s'.""", uid)
 
   def MISSING_PARAMETERS(uid:String):String = String.format("""Parameters are missing for uid '%s'.""", uid)
+
+  def MODEL_BUILDING_STARTED(uid:String) = String.format("""Top-K Association Rule Mining started for uid '%s'.""", uid)
 
   def MODEL_DOES_NOT_EXIST(uid:String):String = String.format("""Model does not exist for uid '%s'.""", uid)
  
@@ -93,8 +105,6 @@ object Messages {
   def TASK_DOES_NOT_EXIST(uid:String):String = String.format("""The task with uid '%s' does not exist.""", uid)
 
   def TASK_IS_UNKNOWN(uid:String,task:String):String = String.format("""The task '%s' is unknown for uid '%s'.""", task, uid)
-
-  def TREE_BUILDING_STARTED(uid:String) = String.format("""Top-K Association Rule Mining started for uid '%s'.""", uid)
   
 }
 
