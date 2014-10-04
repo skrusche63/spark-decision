@@ -24,6 +24,11 @@ import org.apache.spark.rdd.RDD
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
+import de.kp.spark.decision.io.JdbcReader
+import de.kp.spark.decision.util.FeatureSpec
+
+import scala.collection.mutable.ArrayBuffer
+
 class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
 
   protected val MYSQL_DRIVER   = "com.mysql.jdbc.Driver"
@@ -36,10 +41,33 @@ class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
     /* Retrieve site and query from params */
     val site = params("site").asInstanceOf[Int]
     val query = params("query").asInstanceOf[String]
+
+    val (names,types) = FeatureSpec.get
     
-    // TODO
-    null
-    
+    val rawset = new JdbcReader(sc,site,query).read(names.toList)
+    rawset.map(data => {
+     
+     val label = data(names.head).asInstanceOf[String]
+      val features = ArrayBuffer.empty[String]
+      
+      for (name <- names.tail) {
+        
+        val ftype = types(names.indexOf(name))
+        val feature = if (ftype == "C") {
+          data(name).asInstanceOf[String]
+        
+        } else {
+          data(name).asInstanceOf[Double]
+        
+        }
+        
+        features += feature.toString
+      }
+      
+      new Instance(label,features.toArray)
+      
+    })
+   
   }
 
 }
