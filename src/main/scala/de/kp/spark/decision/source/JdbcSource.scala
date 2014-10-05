@@ -21,7 +21,6 @@ package de.kp.spark.decision.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
 import de.kp.spark.decision.io.JdbcReader
@@ -30,11 +29,6 @@ import de.kp.spark.decision.util.Features
 import scala.collection.mutable.ArrayBuffer
 
 class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
-
-  protected val MYSQL_DRIVER   = "com.mysql.jdbc.Driver"
-  protected val NUM_PARTITIONS = 1
-   
-  protected val (url,database,user,password) = Configuration.mysql
   
   override def connect(params:Map[String,Any]):RDD[Instance] = {
     
@@ -46,14 +40,18 @@ class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
     val (names,types) = Features.get(uid)
     
     val rawset = new JdbcReader(sc,site,query).read(names.toList)
+    
+    val bcnames = sc.broadcast(names)
+    val bctypes = sc.broadcast(types)
+    
     rawset.map(data => {
      
-     val label = data(names.head).asInstanceOf[String]
+      val label = data(bcnames.value.head).asInstanceOf[String]
       val features = ArrayBuffer.empty[String]
       
-      for (name <- names.tail) {
+      for (name <- bcnames.value.tail) {
         
-        val ftype = types(names.indexOf(name))
+        val ftype = bctypes.value(bcnames.value.indexOf(name))
         val feature = if (ftype == "C") {
           data(name).asInstanceOf[String]
         
