@@ -19,34 +19,45 @@ package de.kp.spark.decision.util
  */
 
 import de.kp.spark.decision.Configuration
+import de.kp.spark.decision.redis.RedisCache
 
 import scala.xml._
 import scala.collection.mutable.ArrayBuffer
 
-object FeatureSpec {
+object Features {
 
   private val (base,file) = Configuration.tree
   
-  private val names = ArrayBuffer.empty[String]
-  private val types = ArrayBuffer.empty[String]
+  def get(uid:String):(ArrayBuffer[String],ArrayBuffer[String]) = {
   
-  private val info = XML.load(file)
+    val names = ArrayBuffer.empty[String]
+    val types = ArrayBuffer.empty[String]
+
+    try {
+          
+      val info = if (RedisCache.metaExists(uid)) {      
+        XML.load(RedisCache.meta(uid))
+    
+      } else {
+        XML.load(file)
+        
+      }
   
-  /*
-   * Read the XML (info file) to extract the
-   * feature names and also their types
-   */
-  for (att <- info \ "attribute") {
-     
-    names += att.text
-    /* 
-     * The type is either 'C' for categorical or 'N'
-     * for numerical features
-     */
-    types += (att \ "@type").toString
-     
+      for (att <- info \ "attribute") {
+        names += att.text
+        /* 
+         * The type is either 'C' for categorical 
+         * or 'N' for numerical features
+         */
+        types += (att \ "@type").toString     
+      }
+      
+    } catch {
+      case e:Exception => {}
+    }
+    
+    (names,types)
+    
   }
 
-  def get() = (names,types)
-  
 }

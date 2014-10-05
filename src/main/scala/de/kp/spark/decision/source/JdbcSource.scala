@@ -25,7 +25,7 @@ import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
 import de.kp.spark.decision.io.JdbcReader
-import de.kp.spark.decision.util.FeatureSpec
+import de.kp.spark.decision.util.Features
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -42,7 +42,8 @@ class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
     val site = params("site").asInstanceOf[Int]
     val query = params("query").asInstanceOf[String]
 
-    val (names,types) = FeatureSpec.get
+    val uid = params("uid").asInstanceOf[String]
+    val (names,types) = Features.get(uid)
     
     val rawset = new JdbcReader(sc,site,query).read(names.toList)
     rawset.map(data => {

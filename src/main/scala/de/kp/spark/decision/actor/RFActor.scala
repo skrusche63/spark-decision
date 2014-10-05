@@ -20,14 +20,17 @@ package de.kp.spark.decision.actor
 
 import java.util.Date
 import akka.actor.Actor
+
 import org.apache.spark.rdd.RDD
+
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.source.DecisionSource
+
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.tree.RF
+
 import de.kp.spark.decision.redis.RedisCache
-import de.kp.spark.decision.util.FeatureSpec
-import groovy.transform.ToString
+import de.kp.spark.decision.util.Features
 
 class RFActor extends Actor with SparkActor {
   
@@ -85,7 +88,7 @@ class RFActor extends Actor with SparkActor {
     RedisCache.addStatus(uid,task,DecisionStatus.DATASET)
           
     val (m,trees,miss) = params        
-    val (names,types)  = FeatureSpec.get
+    val (names,types)  = Features.get(uid)
     
     val model = RF.train(dataset,names.toArray,types.toArray, miss, m, trees)
 

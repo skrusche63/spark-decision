@@ -24,7 +24,7 @@ import org.apache.spark.rdd.RDD
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.io.ElasticReader
 
-import de.kp.spark.decision.util.FeatureSpec
+import de.kp.spark.decision.util.Features
 import scala.collection.mutable.ArrayBuffer
 
 class ElasticSource(@transient sc:SparkContext) extends Source(sc) {
@@ -34,7 +34,8 @@ class ElasticSource(@transient sc:SparkContext) extends Source(sc) {
     val query = params("query").asInstanceOf[String]
     val resource = params("resource").asInstanceOf[String]
     
-    val (names,types) = FeatureSpec.get
+    val uid = params("uid").asInstanceOf[String]
+    val (names,types) = Features.get(uid)
     
     val spec = sc.broadcast(names)
     

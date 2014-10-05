@@ -40,6 +40,18 @@ object RedisCache {
     
   }
   
+  def addMeta(uid:String,meta:String) {
+   
+    val now = new Date()
+    val timestamp = now.getTime()
+    
+    val k = "meta:" + uid
+    val v = "" + timestamp + ":" + meta
+    
+    client.zadd(k,timestamp,v)
+    
+  }
+  
   def addStatus(uid:String, task:String, status:String) {
    
     val now = new Date()
@@ -55,6 +67,13 @@ object RedisCache {
   def forestExist(uid:String):Boolean = {
 
     val k = "forest:" + service + ":" + uid
+    client.exists(k)
+    
+  }
+  
+  def metaExists(uid:String):Boolean = {
+
+    val k = "meta:" + uid
     client.exists(k)
     
   }
@@ -101,6 +120,22 @@ object RedisCache {
       
     }
   
+  }
+  
+  def meta(uid:String):String = {
+
+    val k = "meta:" + uid
+    val metas = client.zrange(k, 0, -1)
+
+    if (metas.size() == 0) {
+      null
+    
+    } else {
+      
+      metas.toList.last
+      
+    }
+
   }
   
   def status(uid:String):String = {
