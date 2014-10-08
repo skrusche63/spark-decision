@@ -18,6 +18,8 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import org.apache.spark.SparkContext
+
 import akka.actor.{Actor,ActorLogging,ActorRef,Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -30,7 +32,7 @@ import de.kp.spark.decision.redis.RedisCache
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class ModelBuilder extends Actor with ActorLogging {
+class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLogging {
 
   implicit val ec = context.dispatcher
   
@@ -56,13 +58,22 @@ class ModelBuilder extends Actor with ActorLogging {
           }
 
           response.onSuccess {
-            case result => origin ! Serializer.serializeResponse(result)
+            case result => {
+              
+              origin ! Serializer.serializeResponse(result)
+              context.stop(self)
+              
+            }
           }
 
           response.onFailure {
-            case throwable => {             
+            case throwable => {           
+              
               val resp = failure(req,throwable.toString)
+            
               origin ! Serializer.serializeResponse(resp)	                  
+              context.stop(self)
+              
             }	  
           }
          
@@ -78,21 +89,32 @@ class ModelBuilder extends Actor with ActorLogging {
           }
            
           origin ! Serializer.serializeResponse(resp)
-           
+          context.stop(self)
+          
         }
         
         case _ => {
           
           val msg = Messages.TASK_IS_UNKNOWN(uid,req.task)
+          
           origin ! Serializer.serializeResponse(failure(req,msg))
-           
+          context.stop(self)
+          
         }
         
       }
       
     }
     
-    case _ => {}
+    case _ => {
+      
+      val origin = sender               
+      val msg = Messages.REQUEST_IS_UNKNOWN()          
+          
+      origin ! Serializer.serializeResponse(failure(null,msg))
+      context.stop(self)
+
+    }
   
   }
   
@@ -141,7 +163,8 @@ class ModelBuilder extends Actor with ActorLogging {
 
     val algorithm = req.data("algorithm")
     if (algorithm == Algorithms.RF) {      
-      context.actorOf(Props(new RFActor()))      
+      context.actorOf(Props(new RFActor(sc)))   
+      
     } else {
       /* do nothing */
       null
@@ -151,8 +174,8 @@ class ModelBuilder extends Actor with ActorLogging {
  
   private def train(req:ServiceRequest):Future[Any] = {
 
-    val duration = Configuration.actor      
-    implicit val timeout:Timeout = DurationInt(duration).second
+    val (duration,retries,time) = Configuration.actor      
+    implicit val timeout:Timeout = DurationInt(time).second
     
     ask(actor(req), req)
     
@@ -169,9 +192,16 @@ class ModelBuilder extends Actor with ActorLogging {
 
   private def failure(req:ServiceRequest,message:String):ServiceResponse = {
     
-    val data = Map("uid" -> req.data("uid"), "message" -> message)
-    new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
+    if (req == null) {
+      val data = Map("message" -> message)
+      new ServiceResponse("","",data,DecisionStatus.FAILURE)	
+      
+    } else {
+      val data = Map("uid" -> req.data("uid"), "message" -> message)
+      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
     
+    }
+
   }
 
 }

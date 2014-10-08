@@ -18,10 +18,11 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.util.Date
-import akka.actor.Actor
-
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.util.Date
+import akka.actor.{Actor,ActorLogging}
 
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.source.DecisionSource
@@ -32,10 +33,7 @@ import de.kp.spark.decision.tree.RF
 import de.kp.spark.decision.redis.RedisCache
 import de.kp.spark.decision.util.Features
 
-class RFActor extends Actor with SparkActor {
-  
-  /* Create Spark context */
-  private val sc = createCtxLocal("TopKActor",Configuration.spark)      
+class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
   
   private val (base,info) = Configuration.tree
   
@@ -69,14 +67,13 @@ class RFActor extends Actor with SparkActor {
  
       }
       
-      sc.stop
       context.stop(self)
           
     }
     
     case _ => {
       
-      sc.stop
+      log.error("Unknown request.")
       context.stop(self)
       
     }
