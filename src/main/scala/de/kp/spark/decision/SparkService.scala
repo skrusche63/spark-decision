@@ -20,8 +20,6 @@ package de.kp.spark.decision
 
 import org.apache.spark.{SparkConf,SparkContext}
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.SparkContext
-import org.apache.spark.serializer.KryoSerializer
 
 trait SparkService {
   
