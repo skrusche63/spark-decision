@@ -39,12 +39,15 @@ object DecisionService {
 
 }
 
-class DecisionService(conf:String, name:String) {
+class DecisionService(conf:String, name:String) extends SparkService {
 
   val system = ActorSystem(name, ConfigFactory.load(conf))
   sys.addShutdownHook(system.shutdown)
+  
+  /* Create Spark context */
+  private val sc = createCtxLocal("DecisionContext",Configuration.spark)      
 
-  val master = system.actorOf(Props[DecisionMaster], name="decision-master")
+  val master = system.actorOf(Props(new DecisionMaster(sc)), name="decision-master")
 
   def shutdown = system.shutdown()
   
