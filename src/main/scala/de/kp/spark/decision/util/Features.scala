@@ -24,21 +24,34 @@ import de.kp.spark.decision.redis.RedisCache
 import scala.xml._
 import scala.collection.mutable.ArrayBuffer
 
+/**
+ * Features object supports feature specifications either
+ * dynamically provided and retrieved from the Redis instance,
+ * or by specifying a certain template.
+ */
 object Features {
 
   private val (base,file) = Configuration.tree
   
-  def get(uid:String):(ArrayBuffer[String],ArrayBuffer[String]) = {
+  def get(params:Map[String,String]):(ArrayBuffer[String],ArrayBuffer[String]) = {
   
     val names = ArrayBuffer.empty[String]
     val types = ArrayBuffer.empty[String]
 
     try {
-          
+      /*
+       * First we try to retrieve the feature specification from the
+       * Redis instance, i.e. dynamic first 
+       */    
+      val uid = params("uid")
       val info = if (RedisCache.metaExists(uid)) {      
         XML.load(RedisCache.meta(uid))
     
       } else {
+        /*
+         * Future: Distinguish between different templates of
+         * feature specification
+         */
         XML.load(file)
         
       }

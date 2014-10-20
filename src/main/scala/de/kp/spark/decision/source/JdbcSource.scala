@@ -30,15 +30,13 @@ import scala.collection.mutable.ArrayBuffer
 
 class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
   
-  override def connect(params:Map[String,Any]):RDD[Instance] = {
+  override def connect(params:Map[String,String]):RDD[Instance] = {
     
     /* Retrieve site and query from params */
-    val site = params("site").asInstanceOf[Int]
-    val query = params("query").asInstanceOf[String]
+    val site = params("site").toInt
+    val query = params("query")
 
-    val uid = params("uid").asInstanceOf[String]
-    val (names,types) = Features.get(uid)
-    
+    val (names,types) = Features.get(params)    
     val rawset = new JdbcReader(sc,site,query).read(names.toList)
     
     val bcnames = sc.broadcast(names)

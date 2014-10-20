@@ -25,6 +25,6 @@ import de.kp.spark.decision.model._
 
 abstract class Source(@transient sc:SparkContext) extends Serializable {
 
-  def connect(params:Map[String,Any] = Map.empty[String,Any]):RDD[Instance]
+  def connect(params:Map[String,String] = Map.empty[String,String]):RDD[Instance]
 
 }

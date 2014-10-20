@@ -28,7 +28,7 @@ class FileSource(@transient sc:SparkContext) extends Source(sc) {
 
   val input = Configuration.file()
   
-  override def connect(params:Map[String,Any] = Map.empty[String,Any]):RDD[Instance] = {
+  override def connect(params:Map[String,String] = Map.empty[String,String]):RDD[Instance] = {
     
     sc.textFile(input).map {line =>
       /*

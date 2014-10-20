@@ -43,7 +43,7 @@ class ModelQuestor extends Actor with ActorLogging {
            * This request retrieves a set of features and computes
            * the target (or decision) variable 
             */
-          val resp = if (RedisCache.forestExist(uid) == false) {           
+          val resp = if (RedisCache.forestExists(uid) == false) {           
             failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
             
           } else {    

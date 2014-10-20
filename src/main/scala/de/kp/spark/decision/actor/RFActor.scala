@@ -40,9 +40,6 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
   def receive = {
 
     case req:ServiceRequest => {
-
-      val uid = req.data("uid")
-      val task = req.task
       
       val params = properties(req)
       val missing = (params == null)
@@ -52,17 +49,17 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
 
       if (missing == false) {
         /* Register status */
-        RedisCache.addStatus(uid,task,DecisionStatus.STARTED)
+        RedisCache.addStatus(req,DecisionStatus.STARTED)
  
         try {
 
           val source = new DecisionSource(sc)
           val dataset = source.get(req.data)
 
-          if (dataset != null) buildForest(uid,task,dataset,params) else null
+          if (dataset != null) buildForest(req,dataset,params) else null
           
         } catch {
-          case e:Exception => RedisCache.addStatus(uid,task,DecisionStatus.FAILURE)          
+          case e:Exception => RedisCache.addStatus(req,DecisionStatus.FAILURE)          
         }
  
       }
@@ -80,12 +77,12 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
     
   }
   
-  private def buildForest(uid:String,task:String,dataset:RDD[Instance],params:(Int,Int,String)) {
+  private def buildForest(req:ServiceRequest,dataset:RDD[Instance],params:(Int,Int,String)) {
 
-    RedisCache.addStatus(uid,task,DecisionStatus.DATASET)
+    RedisCache.addStatus(req,DecisionStatus.DATASET)
           
     val (m,trees,miss) = params        
-    val (names,types)  = Features.get(uid)
+    val (names,types)  = Features.get(req.data)
     
     val model = RF.train(dataset,names.toArray,types.toArray, miss, m, trees)
 
@@ -95,10 +92,10 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
     model.save(dir)
     
     /* Put directory to cache for later requests */
-    RedisCache.addForest(uid,dir)
+    RedisCache.addForest(req,dir)
           
     /* Update cache */
-    RedisCache.addStatus(uid,task,DecisionStatus.FINISHED)
+    RedisCache.addStatus(req,DecisionStatus.FINISHED)
     
   }
   

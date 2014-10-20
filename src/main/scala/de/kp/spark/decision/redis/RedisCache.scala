@@ -28,31 +28,21 @@ object RedisCache {
   val client  = RedisClient()
   val service = "decision"
 
-  def addForest(uid:String, forest:String) {
+  def addForest(req:ServiceRequest, forest:String) {
    
     val now = new Date()
     val timestamp = now.getTime()
     
-    val k = "forest:" + service + ":" + uid
+    val k = "forest:" + service + ":" + req.data("uid")
     val v = "" + timestamp + ":" + forest
     
     client.zadd(k,timestamp,v)
     
   }
   
-  def addMeta(uid:String,meta:String) {
+  def addStatus(req:ServiceRequest, status:String) {
    
-    val now = new Date()
-    val timestamp = now.getTime()
-    
-    val k = "meta:" + uid
-    val v = "" + timestamp + ":" + meta
-    
-    client.zadd(k,timestamp,v)
-    
-  }
-  
-  def addStatus(uid:String, task:String, status:String) {
+    val (uid,task) = (req.data("uid"),req.task)
    
     val now = new Date()
     val timestamp = now.getTime()
@@ -64,7 +54,7 @@ object RedisCache {
     
   }
    
-  def forestExist(uid:String):Boolean = {
+  def forestExists(uid:String):Boolean = {
 
     val k = "forest:" + service + ":" + uid
     client.exists(k)

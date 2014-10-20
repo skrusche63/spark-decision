@@ -29,18 +29,18 @@ import scala.collection.mutable.ArrayBuffer
 
 class ElasticSource(@transient sc:SparkContext) extends Source(sc) {
  
-  override def connect(params:Map[String,Any]):RDD[Instance] = {
+  override def connect(params:Map[String,String]):RDD[Instance] = {
     
-    val query = params("query").asInstanceOf[String]
-    val resource = params("resource").asInstanceOf[String]
+    val index = params("index")
+    val mapping = params("type")
     
-    val uid = params("uid").asInstanceOf[String]
-    val (names,types) = Features.get(uid)
+    val query = params("query")
     
+    val (names,types) = Features.get(params)    
     val spec = sc.broadcast(names)
     
     /* Connect to Elasticsearch */
-    val rawset = new ElasticReader(sc,resource,query).read
+    val rawset = new ElasticReader(sc,index,mapping,query).read
     rawset.map(data => {
       
       val fields = spec.value
