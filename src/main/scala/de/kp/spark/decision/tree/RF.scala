@@ -64,7 +64,7 @@ class RF(
 
   /*
    * A helper method to select a randomized subset (m)
-   * of all features indexes (0 unti M)
+   * of all features indexes (0 until M)
    */
   private def randIndexes(m: Int, M: Int): Array[Int] = {
     
