@@ -83,7 +83,7 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
     
   }
 
-  private def doGet[T](ctx:RequestContext) = doRequest(ctx,"decision","get:decision")
+  private def doGet[T](ctx:RequestContext) = doRequest(ctx,"decision","get:prediction")
 
   private def doTrain[T](ctx:RequestContext) = doRequest(ctx,"decision","train")
 
