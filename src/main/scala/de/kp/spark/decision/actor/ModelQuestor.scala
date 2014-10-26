@@ -38,7 +38,7 @@ class ModelQuestor extends Actor with ActorLogging {
 
       req.task match {
 
-        case "get:decision" => {
+        case "get:prediction" => {
           /*
            * This request retrieves a set of features and computes
            * the target (or decision) variable 
