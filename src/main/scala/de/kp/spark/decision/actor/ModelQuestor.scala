@@ -62,7 +62,7 @@ class ModelQuestor extends Actor with ActorLogging {
                   val model = new RFModel().loadForest(forest)
                   val decision = model.predict(req.data("features").split(","))
 
-                  val data = Map("uid" -> uid, "decision" -> decision)
+                  val data = Map("uid" -> uid, "prediction" -> decision)
                   new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)
                 
                 } catch {
