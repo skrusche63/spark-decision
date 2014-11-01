@@ -28,6 +28,18 @@ object RedisCache {
   val client  = RedisClient()
   val service = "decision"
 
+  def addFields(req:ServiceRequest,fields:Fields) {
+    
+    val now = new Date()
+    val timestamp = now.getTime()
+    
+    val k = "fields:" + service + ":" + req.data("uid")
+    val v = "" + timestamp + ":" + Serializer.serializeFields(fields)
+    
+    client.zadd(k,timestamp,v)
+    
+  }
+
   def addForest(req:ServiceRequest, forest:String) {
    
     val now = new Date()
@@ -53,17 +65,17 @@ object RedisCache {
     client.zadd(k,timestamp,v)
     
   }
+
+  def fieldsExist(uid:String):Boolean = {
+
+    val k = "fields:" + service + ":" + uid
+    client.exists(k)
+    
+  }
    
   def forestExists(uid:String):Boolean = {
 
     val k = "forest:" + service + ":" + uid
-    client.exists(k)
-    
-  }
-  
-  def metaExists(uid:String):Boolean = {
-
-    val k = "meta:" + uid
     client.exists(k)
     
   }
@@ -94,6 +106,23 @@ object RedisCache {
     }
      
   }
+ 
+  def fields(uid:String):Fields = {
+
+    val k = "fields:" + service + ":" + uid
+    val metas = client.zrange(k, 0, -1)
+
+    if (metas.size() == 0) {
+      new Fields(List.empty[Field])
+    
+    } else {
+      
+      val fields = metas.toList.last
+      Serializer.deserializeFields(fields)
+      
+    }
+
+  }
   
   def forest(uid:String):String = {
 
@@ -110,22 +139,6 @@ object RedisCache {
       
     }
   
-  }
-  
-  def meta(uid:String):String = {
-
-    val k = "meta:" + uid
-    val metas = client.zrange(k, 0, -1)
-
-    if (metas.size() == 0) {
-      null
-    
-    } else {
-      
-      metas.toList.last
-      
-    }
-
   }
   
   def status(uid:String):String = {

@@ -31,7 +31,7 @@ import de.kp.spark.decision.model._
 import de.kp.spark.decision.tree.RF
 
 import de.kp.spark.decision.redis.RedisCache
-import de.kp.spark.decision.util.Features
+import de.kp.spark.decision.util.Fields
 
 class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
   
@@ -82,9 +82,12 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
     RedisCache.addStatus(req,DecisionStatus.DATASET)
           
     val (m,trees,miss) = params        
-    val (names,types)  = Features.get(req.data)
-    
-    val model = RF.train(dataset,names.toArray,types.toArray, miss, m, trees)
+    val (names,types)  = Fields.get(req.data)
+    /*
+     * The RF object requires a metadata specification for the features without
+     * the target description; note, that the target is the head of the fields
+     */
+    val model = RF.train(dataset,names.tail.toArray,types.tail.toArray, miss, m, trees)
 
     val now = new Date()
     val dir = base + "/rf-" + now.getTime().toString

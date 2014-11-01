@@ -25,11 +25,11 @@ import scala.xml._
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Features object supports feature specifications either
+ * Fields object supports feature specifications either
  * dynamically provided and retrieved from the Redis instance,
  * or by specifying a certain template.
  */
-object Features {
+object Fields {
 
   private val (base,file) = Configuration.tree
   
@@ -44,25 +44,31 @@ object Features {
        * Redis instance, i.e. dynamic first 
        */    
       val uid = params("uid")
-      val info = if (RedisCache.metaExists(uid)) {      
-        XML.load(RedisCache.meta(uid))
+      if (RedisCache.fieldsExist(uid)) {     
+        
+        val fieldspec = RedisCache.fields(uid)
+        for (field <- fieldspec.items) {
+          
+          names += field.name
+          types += field.datatype
+
+        }  
     
       } else {
         /*
          * Future: Distinguish between different templates of
          * feature specification
          */
-        XML.load(file)
+        val info = XML.load(file)
+        for (att <- info \ "attribute") {
+          names += att.text
+          /* 
+           * The type is either 'C' for categorical 
+           * or 'N' for numerical features
+           */
+          types += (att \ "@type").toString     
+        }
         
-      }
-  
-      for (att <- info \ "attribute") {
-        names += att.text
-        /* 
-         * The type is either 'C' for categorical 
-         * or 'N' for numerical features
-         */
-        types += (att \ "@type").toString     
       }
       
     } catch {

@@ -24,7 +24,7 @@ import org.apache.spark.rdd.RDD
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.io.ElasticReader
 
-import de.kp.spark.decision.util.Features
+import de.kp.spark.decision.util.Fields
 import scala.collection.mutable.ArrayBuffer
 
 class ElasticSource(@transient sc:SparkContext) extends Source(sc) {
@@ -36,7 +36,7 @@ class ElasticSource(@transient sc:SparkContext) extends Source(sc) {
     
     val query = params("query")
     
-    val (names,types) = Features.get(params)    
+    val (names,types) = Fields.get(params)    
     val spec = sc.broadcast(names)
     
     /* Connect to Elasticsearch */

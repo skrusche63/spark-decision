@@ -19,7 +19,7 @@ package de.kp.spark.decision.actor
  */
 
 import org.apache.spark.SparkContext
-import akka.actor.{Actor,ActorLogging,ActorRef,Props}
+import akka.actor.{ActorRef,Props}
 
 import akka.pattern.ask
 import akka.util.Timeout
@@ -32,7 +32,7 @@ import de.kp.spark.decision.model._
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Future
 
-class DecisionMaster(@transient val sc:SparkContext) extends Actor with ActorLogging {
+class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
   
   /* Load configuration for routers */
   val (duration,retries,time) = Configuration.actor   
@@ -58,6 +58,8 @@ class DecisionMaster(@transient val sc:SparkContext) extends Actor with ActorLog
 	    case "train"  => ask(actor("builder"),deser).mapTo[ServiceResponse]
         
 	    case "status" => ask(actor("builder"),deser).mapTo[ServiceResponse]
+        
+	    case "register" => ask(actor("registrar"),deser).mapTo[ServiceResponse]
 
 	    case "track"  => ask(actor("tracker"),deser).mapTo[ServiceResponse]
        
@@ -97,6 +99,8 @@ class DecisionMaster(@transient val sc:SparkContext) extends Actor with ActorLog
       case "builder" => context.actorOf(Props(new ModelBuilder(sc)))
         
       case "questor" => context.actorOf(Props(new ModelQuestor()))
+        
+      case "registrar" => context.actorOf(Props(new DecisionRegistrar()))
    
       case "tracker" => context.actorOf(Props(new DecisionTracker()))
       
@@ -104,20 +108,6 @@ class DecisionMaster(@transient val sc:SparkContext) extends Actor with ActorLog
       
     }
   
-  }
-
-  private def failure(req:ServiceRequest,message:String):ServiceResponse = {
-    
-    if (req == null) {
-      val data = Map("message" -> message)
-      new ServiceResponse("","",data,DecisionStatus.FAILURE)	
-      
-    } else {
-      val data = Map("uid" -> req.data("uid"), "message" -> message)
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-    
-    }
-
   }
 
 }

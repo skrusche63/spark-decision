@@ -24,7 +24,7 @@ import org.apache.spark.rdd.RDD
 import de.kp.spark.decision.model._
 
 import de.kp.spark.decision.io.JdbcReader
-import de.kp.spark.decision.util.Features
+import de.kp.spark.decision.util.Fields
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -36,7 +36,7 @@ class JdbcSource(@transient sc:SparkContext) extends Source(sc) {
     val site = params("site").toInt
     val query = params("query")
 
-    val (names,types) = Features.get(params)    
+    val (names,types) = Fields.get(params)    
     val rawset = new JdbcReader(sc,site,query).read(names.toList)
     
     val bcnames = sc.broadcast(names)
