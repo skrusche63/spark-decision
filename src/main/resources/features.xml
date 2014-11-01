@@ -1,4 +1,7 @@
 <info>
+    <!-- The target variable must be the first to be specified -->
+    <attribute type="C">target</attribute>
+    <!-- All subsequent variables specify features or predictors -->
 	<attribute type="N">age</attribute>
 	<attribute type="C">sex</attribute>
 	<attribute type="C">on thyroxine</attribute>
