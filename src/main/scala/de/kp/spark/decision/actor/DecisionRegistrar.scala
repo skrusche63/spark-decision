@@ -68,7 +68,7 @@ class DecisionRegistrar extends BaseActor {
  
         RedisCache.addFields(req, new Fields(fields.toList))
         
-        new ServiceResponse("context","meta",Map("uid"-> uid),DecisionStatus.SUCCESS)
+        new ServiceResponse("decision","register",Map("uid"-> uid),DecisionStatus.SUCCESS)
         
       } catch {
         case throwable:Throwable => failure(req,throwable.getMessage)
