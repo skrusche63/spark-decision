@@ -57,12 +57,12 @@ class DecisionRegistrar extends BaseActor {
         val target = zip.head
         if (target._2 != "string") throw new Exception("Target variable must be a String")
         
-        fields += new Field(target._1,target._2)
+        fields += new Field(target._1,target._2,"")
         
         for (feature <- zip.tail) {
           
           if (feature._2 != "string" && feature._2 != "double") throw new Exception("A feature must either be a String or a Double.")          
-          fields += new Field(feature._1, if (feature._2 == "string") "C" else "N")
+          fields += new Field(feature._1, if (feature._2 == "string") "C" else "N","")
         
         }
  
