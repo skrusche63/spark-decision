@@ -22,7 +22,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import java.util.Date
-import akka.actor.{Actor,ActorLogging}
 
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.source.DecisionSource
@@ -33,7 +32,7 @@ import de.kp.spark.decision.tree.RF
 import de.kp.spark.decision.redis.RedisCache
 import de.kp.spark.decision.util.Fields
 
-class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
+class RFActor(@transient val sc:SparkContext) extends BaseActor {
   
   private val (base,info) = Configuration.tree
   
@@ -100,6 +99,9 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
     /* Update cache */
     RedisCache.addStatus(req,DecisionStatus.FINISHED)
     
+    /* Notify potential listeners */
+    notify(req,DecisionStatus.FINISHED)
+    
   }
   
   private def properties(req:ServiceRequest):(Int,Int,String) = {
@@ -119,22 +121,6 @@ class RFActor(@transient val sc:SparkContext) extends Actor with ActorLogging {
       }
     }
     
-  }
-  
-  private def response(req:ServiceRequest,missing:Boolean):ServiceResponse = {
-    
-    val uid = req.data("uid")
-    
-    if (missing == true) {
-      val data = Map("uid" -> uid, "message" -> Messages.MISSING_PARAMETERS(uid))
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-  
-    } else {
-      val data = Map("uid" -> uid, "message" -> Messages.MODEL_BUILDING_STARTED(uid))
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.STARTED)	
-  
-    }
-
   }
   
 }

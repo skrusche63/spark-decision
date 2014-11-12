@@ -19,10 +19,15 @@ package de.kp.spark.decision.actor
  */
 
 import akka.actor.{Actor,ActorLogging}
+
+import de.kp.spark.decision.RemoteContext
 import de.kp.spark.decision.model._
 
 abstract class BaseActor extends Actor with ActorLogging {
 
+  /**
+   * Build service response in case of a failure
+   */
   protected def failure(req:ServiceRequest,message:String):ServiceResponse = {
     
     if (req == null) {
@@ -37,4 +42,35 @@ abstract class BaseActor extends Actor with ActorLogging {
     
   }
 
+  /**
+   * Notify all registered listeners about a certain status
+   */
+  protected def notify(req:ServiceRequest,status:String) {
+
+    /* Build message */
+    val data = Map("uid" -> req.data("uid"))
+    val response = new ServiceResponse(req.service,req.task,data,status)	
+    
+    /* Notify listeners */
+    val message = Serializer.serializeResponse(response)    
+    RemoteContext.notify(message)
+    
+  }
+  
+  protected def response(req:ServiceRequest,missing:Boolean):ServiceResponse = {
+    
+    val uid = req.data("uid")
+    
+    if (missing == true) {
+      val data = Map("uid" -> uid, "message" -> Messages.MISSING_PARAMETERS(uid))
+      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
+  
+    } else {
+      val data = Map("uid" -> uid, "message" -> Messages.MODEL_BUILDING_STARTED(uid))
+      new ServiceResponse(req.service,req.task,data,DecisionStatus.STARTED)	
+  
+    }
+
+  }
+  
 }
