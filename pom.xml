@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>spark-decision</groupId>
   <artifactId>spark-decision</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.2.0</version>
   <name>Spark-Decision</name>
   <inceptionYear>2010</inceptionYear>
   <licenses>
@@ -220,9 +220,10 @@
       </plugin>
     </plugins>
   </build>
-  <description>Reactive Decision Making with Apache Spark</description>
+  <description>Reactive Decision Analysis engine of Predictiveworks.</description>
   <organization>
   	<name>Dr. Krusche &amp; Partner PartG</name>
-  	<url>http://dr-kruscheundpartner.de</url>
+  	<url>http://dr-kruscheundpartner.com</url>
   </organization>
+  <url>https://github.com/skrusche63/spark-decision</url>
 </project>
