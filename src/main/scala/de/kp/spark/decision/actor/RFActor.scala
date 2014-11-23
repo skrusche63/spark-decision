@@ -81,7 +81,7 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
     RedisCache.addStatus(req,DecisionStatus.DATASET)
           
     val (m,trees,miss) = params        
-    val (names,types)  = Fields.get(req.data)
+    val (names,types)  = Fields.get(req.data("uid"))
     /*
      * The RF object requires a metadata specification for the features without
      * the target description; note, that the target is the head of the fields

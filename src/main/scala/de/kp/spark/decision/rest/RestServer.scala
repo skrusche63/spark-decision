@@ -19,7 +19,9 @@ package de.kp.spark.decision.rest
 */
 
 import akka.actor.ActorSystem
-import de.kp.spark.decision.{Configuration,SparkService}
+
+import de.kp.spark.core.SparkService
+import de.kp.spark.decision.{Configuration}
 
 object RestServer extends SparkService {
   

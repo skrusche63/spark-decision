@@ -33,7 +33,7 @@ object Fields {
 
   private val (base,file) = Configuration.tree
   
-  def get(params:Map[String,String]):(ArrayBuffer[String],ArrayBuffer[String]) = {
+  def get(uid:String):(ArrayBuffer[String],ArrayBuffer[String]) = {
   
     val names = ArrayBuffer.empty[String]
     val types = ArrayBuffer.empty[String]
@@ -43,7 +43,6 @@ object Fields {
        * First we try to retrieve the feature specification from the
        * Redis instance, i.e. dynamic first 
        */    
-      val uid = params("uid")
       if (RedisCache.fieldsExist(uid)) {     
         
         val fieldspec = RedisCache.fields(uid)

@@ -21,12 +21,21 @@ package de.kp.spark.decision.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
+
+import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
+
+import de.kp.spark.decision.util.Fields
 
 class DecisionSource(@transient sc:SparkContext) {
   
+  private val model = new DecisionModel(sc)
+  
   def get(data:Map[String,String]):RDD[Instance] = {
     
+    val uid = data("uid")
+
     val source = data("source")
     source match {
       /* 
@@ -34,20 +43,40 @@ class DecisionSource(@transient sc:SparkContext) {
        * search index from Elasticsearch; the configuration parameters 
        * are retrieved from the service configuration 
        */    
-      case Sources.ELASTIC => new ElasticSource(sc).connect(data)
+      case Sources.ELASTIC => {
+        
+        val rawset = new ElasticSource(sc).connect(data)
+        model.buildElastic(uid,rawset)
+        
+      }
       /* 
        * Build decision model from features persisted as a file on the 
        * (HDFS) file system; the configuration parameters are retrieved 
        * from the service configuration  
        */    
-      case Sources.FILE => new FileSource(sc).connect(data)
+      case Sources.FILE => {
+        
+        val path = Configuration.file()
+ 
+        val rawset = new FileSource(sc).connect(data,path)
+        model.buildFile(uid,rawset)
+         
+      }
+      
       /* 
        * Build decision model from features persisted as an appropriate 
        * table from a JDB database; the configuration parameters are 
        * retrieved from the service configuration 
        * 
        */
-      case Sources.JDBC => new JdbcSource(sc).connect(data)
+      case Sources.JDBC => {
+
+        val (names,types) = Fields.get(uid)    
+        
+        val rawset = new JdbcSource(sc).connect(data,names.toList)
+        model.buildJDBC(uid,rawset)
+        
+      }
             
       case _ => null
       
