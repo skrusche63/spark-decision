@@ -23,18 +23,21 @@ import org.apache.spark.rdd.RDD
 
 import java.util.Date
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.source.DecisionSource
 
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.tree.RF
 
-import de.kp.spark.decision.redis.RedisCache
+import de.kp.spark.decision.sink.RedisSink
 import de.kp.spark.decision.util.Fields
 
 class RFActor(@transient val sc:SparkContext) extends BaseActor {
   
   private val (base,info) = Configuration.tree
+  private val sink = new RedisSink()
   
   def receive = {
 
@@ -48,17 +51,17 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
 
       if (missing == false) {
         /* Register status */
-        RedisCache.addStatus(req,DecisionStatus.STARTED)
+        cache.addStatus(req,DecisionStatus.STARTED)
  
         try {
 
           val source = new DecisionSource(sc)
-          val dataset = source.get(req.data)
+          val dataset = source.get(req)
 
           if (dataset != null) buildForest(req,dataset,params) else null
           
         } catch {
-          case e:Exception => RedisCache.addStatus(req,DecisionStatus.FAILURE)          
+          case e:Exception => cache.addStatus(req,DecisionStatus.FAILURE)          
         }
  
       }
@@ -78,10 +81,10 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
   
   private def buildForest(req:ServiceRequest,dataset:RDD[Instance],params:(Int,Int,String)) {
 
-    RedisCache.addStatus(req,DecisionStatus.DATASET)
+    cache.addStatus(req,DecisionStatus.DATASET)
           
     val (m,trees,miss) = params        
-    val (names,types)  = Fields.get(req.data("uid"))
+    val (names,types)  = Fields.get(req)
     /*
      * The RF object requires a metadata specification for the features without
      * the target description; note, that the target is the head of the fields
@@ -93,11 +96,11 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
     /* Save model in directory of file system */
     model.save(dir)
     
-    /* Put directory to cache for later requests */
-    RedisCache.addForest(req,dir)
+    /* Put directory to sink for later requests */
+    sink.addForest(req,dir)
           
     /* Update cache */
-    RedisCache.addStatus(req,DecisionStatus.FINISHED)
+    cache.addStatus(req,DecisionStatus.FINISHED)
     
     /* Notify potential listeners */
     notify(req,DecisionStatus.FINISHED)

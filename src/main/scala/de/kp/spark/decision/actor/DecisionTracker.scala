@@ -20,6 +20,8 @@ package de.kp.spark.decision.actor
 
 import java.util.Date
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.io.{ElasticBuilderFactory => EBF,ElasticWriter}
 

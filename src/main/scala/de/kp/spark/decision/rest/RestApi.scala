@@ -37,12 +37,12 @@ import scala.concurrent.duration.DurationInt
 
 import scala.util.parsing.json._
 
+import de.kp.spark.core.model._
 import de.kp.spark.core.rest.RestService
 import de.kp.spark.decision.Configuration
 
 import de.kp.spark.decision.actor.DecisionMaster
 import de.kp.spark.decision.model._
-
 
 class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkContext) extends HttpService with Directives {
 

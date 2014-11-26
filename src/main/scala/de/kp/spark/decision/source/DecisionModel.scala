@@ -21,6 +21,7 @@ package de.kp.spark.decision.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.model._
 import de.kp.spark.decision.model._
 
 import de.kp.spark.decision.util.Fields
@@ -28,9 +29,9 @@ import scala.collection.mutable.ArrayBuffer
 
 class DecisionModel(@transient sc:SparkContext) extends Serializable {
   
-  def buildElastic(uid:String,rawset:RDD[Map[String,String]]):RDD[Instance] = {
+  def buildElastic(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[Instance] = {
     
-    val (names,types) = Fields.get(uid)    
+    val (names,types) = Fields.get(req)    
     val spec = sc.broadcast(names)
     
     rawset.map(data => {
@@ -49,7 +50,7 @@ class DecisionModel(@transient sc:SparkContext) extends Serializable {
     })
   }
   
-  def buildFile(uid:String,rawset:RDD[String]):RDD[Instance] = {
+  def buildFile(req:ServiceRequest,rawset:RDD[String]):RDD[Instance] = {
    
     rawset.map {line =>
       /*
@@ -65,9 +66,9 @@ class DecisionModel(@transient sc:SparkContext) extends Serializable {
     
   }
   
-  def buildJDBC(uid:String,rawset:RDD[Map[String,Any]]):RDD[Instance] = {
+  def buildJDBC(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[Instance] = {
     
-    val (names,types) = Fields.get(uid)    
+    val (names,types) = Fields.get(req)    
     
     val bcnames = sc.broadcast(names)
     val bctypes = sc.broadcast(types)

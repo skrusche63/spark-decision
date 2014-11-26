@@ -20,24 +20,21 @@ package de.kp.spark.decision.actor
 
 import org.apache.spark.SparkContext
 
-import akka.actor.{Actor,ActorLogging,ActorRef,Props}
+import akka.actor.{ActorRef,Props}
 import akka.pattern.ask
 import akka.util.Timeout
 
 import de.kp.spark.decision.Configuration
 
+import de.kp.spark.core.model._
 import de.kp.spark.decision.model._
-import de.kp.spark.decision.redis.RedisCache
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLogging {
+class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
 
   implicit val ec = context.dispatcher
-  
-  private val algorithms = Array(Algorithms.RF)
-  private val sources = Array(Sources.ELASTIC,Sources.FILE,Sources.JDBC)
   
   def receive = {
 
@@ -50,7 +47,7 @@ class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLoggi
         
         case "train" => {
           
-          val response = validate(req.data) match {
+          val response = validate(req) match {
             
             case None => train(req).mapTo[ServiceResponse]            
             case Some(message) => Future {failure(req,message)}
@@ -81,7 +78,7 @@ class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLoggi
        
         case "status" => {
           
-          val resp = if (RedisCache.taskExists(uid) == false) {           
+          val resp = if (cache.statusExists(req) == false) {           
             failure(req,Messages.TASK_DOES_NOT_EXIST(uid))           
           } else {            
             status(req)
@@ -118,22 +115,22 @@ class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLoggi
   
   }
   
-  private def validate(params:Map[String,String]):Option[String] = {
+  private def validate(req:ServiceRequest):Option[String] = {
 
-    val uid = params("uid")
+    val uid = req.data("uid")
     
-    if (RedisCache.taskExists(uid)) {            
+    if (cache.statusExists(req)) {            
       return Some(Messages.TASK_ALREADY_STARTED(uid))   
     }
 
-    params.get("algorithm") match {
+    req.data.get("algorithm") match {
         
       case None => {
         return Some(Messages.NO_ALGORITHM_PROVIDED(uid))              
       }
         
       case Some(algorithm) => {
-        if (algorithms.contains(algorithm) == false) {
+        if (Algorithms.isAlgorithm(algorithm) == false) {
           return Some(Messages.ALGORITHM_IS_UNKNOWN(uid,algorithm))    
         }
           
@@ -141,14 +138,14 @@ class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLoggi
     
     }  
     
-    params.get("source") match {
+    req.data.get("source") match {
         
       case None => {
         return Some(Messages.NO_SOURCE_PROVIDED(uid))       
       }
         
       case Some(source) => {
-        if (sources.contains(source) == false) {
+        if (Sources.isSource(source) == false) {
           return Some(Messages.SOURCE_IS_UNKNOWN(uid,source))    
         }          
       }
@@ -186,21 +183,7 @@ class ModelBuilder(@transient val sc:SparkContext) extends Actor with ActorLoggi
     val uid = req.data("uid")
     val data = Map("uid" -> uid)
                 
-    new ServiceResponse(req.service,req.task,data,RedisCache.status(uid))	
-
-  }
-
-  private def failure(req:ServiceRequest,message:String):ServiceResponse = {
-    
-    if (req == null) {
-      val data = Map("message" -> message)
-      new ServiceResponse("","",data,DecisionStatus.FAILURE)	
-      
-    } else {
-      val data = Map("uid" -> req.data("uid"), "message" -> message)
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-    
-    }
+    new ServiceResponse(req.service,req.task,data,cache.status(req))	
 
   }
 

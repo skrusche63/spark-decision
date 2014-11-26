@@ -23,6 +23,8 @@ import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
@@ -32,11 +34,9 @@ class DecisionSource(@transient sc:SparkContext) {
   
   private val model = new DecisionModel(sc)
   
-  def get(data:Map[String,String]):RDD[Instance] = {
-    
-    val uid = data("uid")
+  def get(req:ServiceRequest):RDD[Instance] = {
 
-    val source = data("source")
+    val source = req.data("source")
     source match {
       /* 
        * Build decision model from features persisted as an appropriate 
@@ -45,8 +45,8 @@ class DecisionSource(@transient sc:SparkContext) {
        */    
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(data)
-        model.buildElastic(uid,rawset)
+        val rawset = new ElasticSource(sc).connect(req.data)
+        model.buildElastic(req,rawset)
         
       }
       /* 
@@ -58,8 +58,8 @@ class DecisionSource(@transient sc:SparkContext) {
         
         val path = Configuration.file()
  
-        val rawset = new FileSource(sc).connect(data,path)
-        model.buildFile(uid,rawset)
+        val rawset = new FileSource(sc).connect(req.data,path)
+        model.buildFile(req,rawset)
          
       }
       
@@ -71,10 +71,10 @@ class DecisionSource(@transient sc:SparkContext) {
        */
       case Sources.JDBC => {
 
-        val (names,types) = Fields.get(uid)    
+        val (names,types) = Fields.get(req)    
         
-        val rawset = new JdbcSource(sc).connect(data,names.toList)
-        model.buildJDBC(uid,rawset)
+        val rawset = new JdbcSource(sc).connect(req.data,names.toList)
+        model.buildJDBC(req,rawset)
         
       }
             

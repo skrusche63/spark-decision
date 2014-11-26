@@ -18,8 +18,10 @@ package de.kp.spark.decision.util
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.kp.spark.core.model._
+import de.kp.spark.core.redis.RedisCache
+
 import de.kp.spark.decision.Configuration
-import de.kp.spark.decision.redis.RedisCache
 
 import scala.xml._
 import scala.collection.mutable.ArrayBuffer
@@ -32,8 +34,9 @@ import scala.collection.mutable.ArrayBuffer
 object Fields {
 
   private val (base,file) = Configuration.tree
+  private val cache = new RedisCache()
   
-  def get(uid:String):(ArrayBuffer[String],ArrayBuffer[String]) = {
+  def get(req:ServiceRequest):(ArrayBuffer[String],ArrayBuffer[String]) = {
   
     val names = ArrayBuffer.empty[String]
     val types = ArrayBuffer.empty[String]
@@ -43,9 +46,9 @@ object Fields {
        * First we try to retrieve the feature specification from the
        * Redis instance, i.e. dynamic first 
        */    
-      if (RedisCache.fieldsExist(uid)) {     
+      if (cache.fieldsExist(req)) {     
         
-        val fieldspec = RedisCache.fields(uid)
+        val fieldspec = cache.fields(req)
         for (field <- fieldspec.items) {
           
           names += field.name

@@ -18,16 +18,17 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import akka.actor.{Actor,ActorLogging}
+import de.kp.spark.core.model._
 
 import de.kp.spark.decision.model._
-import de.kp.spark.decision.redis.RedisCache
+import de.kp.spark.decision.sink.RedisSink
 
 import de.kp.spark.decision.tree.RFModel
 
-class ModelQuestor extends Actor with ActorLogging {
+class ModelQuestor extends BaseActor {
 
   implicit val ec = context.dispatcher
+  private val sink = new RedisSink()
   
   def receive = {
 
@@ -43,13 +44,13 @@ class ModelQuestor extends Actor with ActorLogging {
            * This request retrieves a set of features and computes
            * the target (or decision) variable 
             */
-          val resp = if (RedisCache.forestExists(uid) == false) {           
+          val resp = if (sink.forestExists(uid) == false) {           
             failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
             
           } else {    
             
-            /* Retrieve path to decision forest for 'uid' from cache */
-            val forest = RedisCache.forest(uid)
+            /* Retrieve path to decision forest for 'uid' from sink */
+            val forest = sink.forest(uid)
             if (forest == null) {
               failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
               
@@ -106,19 +107,6 @@ class ModelQuestor extends Actor with ActorLogging {
 
     }
     
-  }
-
-  private def failure(req:ServiceRequest,message:String):ServiceResponse = {
-    
-    if (req == null) {
-      val data = Map("message" -> message)
-      new ServiceResponse("","",data,DecisionStatus.FAILURE)	
-      
-    } else {
-      val data = Map("uid" -> req.data("uid"), "message" -> message)
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-    
-    }
   }
   
 }

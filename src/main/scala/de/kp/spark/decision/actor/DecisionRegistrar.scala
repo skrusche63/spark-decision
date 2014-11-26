@@ -18,8 +18,9 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.model._
-import de.kp.spark.decision.redis.RedisCache
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -66,8 +67,7 @@ class DecisionRegistrar extends BaseActor {
         
         }
  
-        RedisCache.addFields(req, new Fields(fields.toList))
-        
+        cache.addFields(req, new Fields(fields.toList))        
         new ServiceResponse("decision","register",Map("uid"-> uid),DecisionStatus.SUCCESS)
         
       } catch {

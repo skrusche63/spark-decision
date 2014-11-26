@@ -18,6 +18,8 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.model._
 import de.kp.spark.decision.io.{ElasticBuilderFactory => EBF,ElasticIndexer}
 

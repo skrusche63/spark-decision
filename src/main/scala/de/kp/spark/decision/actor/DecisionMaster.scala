@@ -26,6 +26,8 @@ import akka.util.Timeout
 
 import akka.actor.{OneForOneStrategy, SupervisorStrategy}
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
@@ -37,6 +39,9 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
   /* Load configuration for routers */
   val (duration,retries,time) = Configuration.actor   
 
+  implicit val ec = context.dispatcher
+  implicit val timeout:Timeout = DurationInt(time).second
+
   override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries=retries,withinTimeRange = DurationInt(duration).minutes) {
     case _ : Exception => SupervisorStrategy.Restart
   }
@@ -44,33 +49,12 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
   def receive = {
     
     case req:String => {
-
-      implicit val ec = context.dispatcher
-      implicit val timeout:Timeout = DurationInt(time).second
 	  	    
 	  val origin = sender
 
 	  val deser = Serializer.deserializeRequest(req)
-	  val response = deser.task.split(":")(0) match {
-
-	    case "get" => ask(actor("questor"),deser).mapTo[ServiceResponse]
-	    case "index" => ask(actor("indexer"),deser).mapTo[ServiceResponse]
-
-	    case "train"  => ask(actor("builder"),deser).mapTo[ServiceResponse]        
-	    case "status" => ask(actor("builder"),deser).mapTo[ServiceResponse]
-        
-	    case "register" => ask(actor("registrar"),deser).mapTo[ServiceResponse]
-	    case "track"  => ask(actor("tracker"),deser).mapTo[ServiceResponse]
-       
-        case _ => {
-
-          Future {     
-            failure(deser,Messages.TASK_IS_UNKNOWN(deser.data("uid"),deser.task))
-          } 
-        
-        }
-      
-      }
+	  val response = execute(deser)
+	  
       response.onSuccess {
         case result => origin ! Serializer.serializeResponse(result)
       }
@@ -79,7 +63,22 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
 	  }
       
     }
+     
+    case req:ServiceRequest => {
+	  	    
+	  val origin = sender
+
+	  val response = execute(req)
+      response.onSuccess {
+        case result => origin ! Serializer.serializeResponse(result)
+      }
+      response.onFailure {
+        case result => origin ! failure(req,Messages.GENERAL_ERROR(req.data("uid")))	      
+	  }
+      
+    }
   
+ 
     case _ => {
 
       val origin = sender               
@@ -91,6 +90,27 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
     
   }
 
+  private def execute(req:ServiceRequest):Future[ServiceResponse] = {
+	  
+    req.task.split(":")(0) match {
+
+	  case "get" => ask(actor("questor"),req).mapTo[ServiceResponse]
+	  case "index" => ask(actor("indexer"),req).mapTo[ServiceResponse]
+
+	  case "train"  => ask(actor("builder"),req).mapTo[ServiceResponse]        
+	  case "status" => ask(actor("builder"),req).mapTo[ServiceResponse]
+        
+	  case "register" => ask(actor("registrar"),req).mapTo[ServiceResponse]
+	  case "track"  => ask(actor("tracker"),req).mapTo[ServiceResponse]
+       
+      case _ => Future {     
+        failure(req,Messages.TASK_IS_UNKNOWN(req.data("uid"),req.task))
+      }
+      
+    }
+    
+  }
+  
   private def actor(worker:String):ActorRef = {
     
     worker match {
