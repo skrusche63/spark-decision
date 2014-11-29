@@ -42,63 +42,32 @@ class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
       
       val origin = sender    
       val uid = req.data("uid")
-
-      req.task match {
-        
-        case "train" => {
-          
-          val response = validate(req) match {
-            
-            case None => train(req).mapTo[ServiceResponse]            
-            case Some(message) => Future {failure(req,message)}
-            
-          }
-
-          response.onSuccess {
-            case result => {
-              
-              origin ! Serializer.serializeResponse(result)
-              context.stop(self)
-              
-            }
-          }
-
-          response.onFailure {
-            case throwable => {           
-              
-              val resp = failure(req,throwable.toString)
-            
-              origin ! Serializer.serializeResponse(resp)	                  
-              context.stop(self)
-              
-            }	  
-          }
          
-        }
-       
-        case "status" => {
-          
-          val resp = if (cache.statusExists(req) == false) {           
-            failure(req,Messages.TASK_DOES_NOT_EXIST(uid))           
-          } else {            
-            status(req)
+      val response = validate(req) match {
             
-          }
-           
-          origin ! Serializer.serializeResponse(resp)
+        case None => train(req).mapTo[ServiceResponse]            
+        case Some(message) => Future {failure(req,message)}
+            
+      }
+
+      response.onSuccess {
+        case result => {
+              
+          origin ! Serializer.serializeResponse(result)
           context.stop(self)
-          
+              
         }
-        
-        case _ => {
-          
-          val msg = Messages.TASK_IS_UNKNOWN(uid,req.task)
-          
-          origin ! Serializer.serializeResponse(failure(req,msg))
+      }
+
+      response.onFailure {
+        case throwable => {           
+              
+          val resp = failure(req,throwable.toString)
+            
+          origin ! Serializer.serializeResponse(resp)	                  
           context.stop(self)
-          
-        }
-        
+              
+        }	  
       }
       
     }
@@ -176,15 +145,6 @@ class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
     
     ask(actor(req), req)
     
-  }
-
-  private def status(req:ServiceRequest):ServiceResponse = {
-    
-    val uid = req.data("uid")
-    val data = Map("uid" -> uid)
-                
-    new ServiceResponse(req.service,req.task,data,cache.status(req))	
-
   }
 
 }

@@ -1,4 +1,4 @@
-package de.kp.spark.decision.rest
+package de.kp.spark.decision.api
 /* Copyright (c) 2014 Dr. Krusche & Partner PartG
 * 
 * This file is part of the Spark-Decision project
@@ -52,7 +52,7 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
   override def actorRefFactory:ActorSystem = system
   
   val (duration,retries,time) = Configuration.actor   
-  val master = system.actorOf(Props(new DecisionMaster(sc)), name="DecisionMaster")
+  val master = system.actorOf(Props(new DecisionMaster(sc)), name="decision-master")
  
   def start() {
     RestService.start(routes,system,host,port)

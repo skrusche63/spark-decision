@@ -98,7 +98,7 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
 	  case "index" => ask(actor("indexer"),req).mapTo[ServiceResponse]
 
 	  case "train"  => ask(actor("builder"),req).mapTo[ServiceResponse]        
-	  case "status" => ask(actor("builder"),req).mapTo[ServiceResponse]
+	  case "status" => ask(actor("monitor"),req).mapTo[ServiceResponse]
         
 	  case "register" => ask(actor("registrar"),req).mapTo[ServiceResponse]
 	  case "track"  => ask(actor("tracker"),req).mapTo[ServiceResponse]
@@ -115,14 +115,13 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
     
     worker match {
   
-      case "builder" => context.actorOf(Props(new ModelBuilder(sc)))
-  
+      case "builder" => context.actorOf(Props(new ModelBuilder(sc)))  
       case "indexer" => context.actorOf(Props(new DecisionIndexer()))
         
+      case "monitor" => context.actorOf(Props(new DecisionMonitor()))        
       case "questor" => context.actorOf(Props(new ModelQuestor()))
         
-      case "registrar" => context.actorOf(Props(new DecisionRegistrar()))
-   
+      case "registrar" => context.actorOf(Props(new DecisionRegistrar()))  
       case "tracker" => context.actorOf(Props(new DecisionTracker()))
       
       case _ => null
