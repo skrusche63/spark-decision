@@ -23,11 +23,14 @@ import java.util.Date
 import de.kp.spark.core.model._
 import de.kp.spark.core.redis.RedisClient
 
+import de.kp.spark.decision.Configuration
 import scala.collection.JavaConversions._
 
 class RedisSink {
 
-  val client  = RedisClient()
+  val (host,port) = Configuration.redis
+  val client = RedisClient(host,port.toInt)
+
   val service = "decision"
 
   def addForest(req:ServiceRequest, forest:String) {

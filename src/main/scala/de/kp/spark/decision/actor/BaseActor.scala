@@ -23,12 +23,13 @@ import akka.actor.{Actor,ActorLogging}
 import de.kp.spark.core.model._
 import de.kp.spark.core.redis.RedisCache
 
-import de.kp.spark.decision.RemoteContext
+import de.kp.spark.decision.{Configuration,RemoteContext}
 import de.kp.spark.decision.model._
 
 abstract class BaseActor extends Actor with ActorLogging {
 
-  protected val cache = new RedisCache()
+  val (host,port) = Configuration.redis
+  val cache = new RedisCache(host,port.toInt)
   
   /**
    * Build service response in case of a failure

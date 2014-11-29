@@ -34,7 +34,9 @@ import scala.collection.mutable.ArrayBuffer
 object Fields {
 
   private val (base,file) = Configuration.tree
-  private val cache = new RedisCache()
+
+  val (host,port) = Configuration.redis
+  val cache = new RedisCache(host,port.toInt)
   
   def get(req:ServiceRequest):(ArrayBuffer[String],ArrayBuffer[String]) = {
   
