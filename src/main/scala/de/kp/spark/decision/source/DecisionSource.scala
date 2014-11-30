@@ -32,6 +32,7 @@ import de.kp.spark.decision.util.Fields
 
 class DecisionSource(@transient sc:SparkContext) {
   
+  private val config = Configuration
   private val model = new DecisionModel(sc)
   
   def get(req:ServiceRequest):RDD[Instance] = {
@@ -45,7 +46,7 @@ class DecisionSource(@transient sc:SparkContext) {
        */    
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(req.data)
+        val rawset = new ElasticSource(sc).connect(config,req)
         model.buildElastic(req,rawset)
         
       }
@@ -55,10 +56,8 @@ class DecisionSource(@transient sc:SparkContext) {
        * from the service configuration  
        */    
       case Sources.FILE => {
-        
-        val path = Configuration.file()
  
-        val rawset = new FileSource(sc).connect(req.data,path)
+        val rawset = new FileSource(sc).connect(config.file(0),req)
         model.buildFile(req,rawset)
          
       }
@@ -73,7 +72,7 @@ class DecisionSource(@transient sc:SparkContext) {
 
         val (names,types) = Fields.get(req)    
         
-        val rawset = new JdbcSource(sc).connect(req.data,names.toList)
+        val rawset = new JdbcSource(sc).connect(config,req,names.toList)
         model.buildJDBC(req,rawset)
         
       }
