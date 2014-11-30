@@ -19,10 +19,11 @@ package de.kp.spark.decision.actor
  */
 
 import de.kp.spark.core.model._
+
+import de.kp.spark.core.elastic.{ElasticBuilderFactory => EBF}
 import de.kp.spark.core.io.ElasticIndexer
 
 import de.kp.spark.decision.model._
-import de.kp.spark.decision.io.{ElasticBuilderFactory => EBF}
 
 class DecisionIndexer extends BaseActor {
   
