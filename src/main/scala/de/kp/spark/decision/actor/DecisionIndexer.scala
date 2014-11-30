@@ -18,68 +18,7 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import de.kp.spark.core.model._
+import de.kp.spark.core.actor.BaseIndexer
+import de.kp.spark.decision.Configuration
 
-import de.kp.spark.core.elastic.{ElasticBuilderFactory => EBF}
-import de.kp.spark.core.io.ElasticIndexer
-
-import de.kp.spark.decision.model._
-
-class DecisionIndexer extends BaseActor {
-  
-  def receive = {
-    
-    case req:ServiceRequest => {
-
-      val uid = req.data("uid")
-
-      try {
-        
-        val index   = req.data("index")
-        val mapping = req.data("type")
-    
-        val (names,types) = fieldspec(req.data)
-        
-        val builder = EBF.getBuilder("feature",mapping,names,types)
-        val indexer = new ElasticIndexer()
-    
-        indexer.create(index,mapping,builder)
-        indexer.close()
-      
-        val data = Map("uid" -> uid, "message" -> Messages.SEARCH_INDEX_CREATED(uid))
-        val response = new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)	
-      
-        val origin = sender
-        origin ! response
-      
-      } catch {
-        
-        case e:Exception => {
-          log.error(e, e.getMessage())
-      
-          val data = Map("uid" -> uid, "message" -> e.getMessage())
-          val response = new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-      
-          val origin = sender
-          origin ! response
-
-        }
-      
-      } finally {
-        
-        context.stop(self)
-
-      }
-    }
-    
-  }
- 
-  private def fieldspec(params:Map[String,String]):(List[String],List[String]) = {
-
-    val names = params("names").split(",").toList
-    val types = params("types").split(",").toList
-    
-    (names,types)
-    
-  }
-}
+class DecisionIndexer extends BaseIndexer(Configuration)
