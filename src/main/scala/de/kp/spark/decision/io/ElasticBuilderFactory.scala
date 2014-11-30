@@ -17,8 +17,10 @@ package de.kp.spark.decision.io
 * 
 * If not, see <http://www.gnu.org/licenses/>.
 */
+
 import org.elasticsearch.common.xcontent.XContentBuilder
-  
+import de.kp.spark.core.elastic.ElasticFeatureBuilder
+
 object ElasticBuilderFactory {
 
   val SITE_FIELD:String = "site"
