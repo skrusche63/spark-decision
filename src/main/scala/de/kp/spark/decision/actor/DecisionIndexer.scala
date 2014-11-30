@@ -17,8 +17,20 @@ package de.kp.spark.decision.actor
  * 
  * If not, see <http://www.gnu.org/licenses/>.
  */
+import de.kp.spark.core.model._
 
 import de.kp.spark.core.actor.BaseIndexer
 import de.kp.spark.decision.Configuration
 
-class DecisionIndexer extends BaseIndexer(Configuration)
+class DecisionIndexer extends BaseIndexer(Configuration) {
+   
+  override def getSpec(req:ServiceRequest):(List[String],List[String]) = {
+
+    val names = req.data("names").split(",").toList
+    val types = req.data("types").split(",").toList
+    
+    (names,types)
+    
+  }  
+
+}
