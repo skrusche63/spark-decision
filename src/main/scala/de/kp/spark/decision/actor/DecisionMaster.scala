@@ -56,10 +56,10 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
 	  val response = execute(deser)
 	  
       response.onSuccess {
-        case result => origin ! Serializer.serializeResponse(result)
+        case result => origin ! serialize(result)
       }
       response.onFailure {
-        case result => origin ! failure(deser,Messages.GENERAL_ERROR(deser.data("uid")))	      
+        case result => origin ! serialize(failure(deser,Messages.GENERAL_ERROR(deser.data("uid"))))	      
 	  }
       
     }
@@ -70,7 +70,7 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
 
 	  val response = execute(req)
       response.onSuccess {
-        case result => origin ! Serializer.serializeResponse(result)
+        case result => origin ! result
       }
       response.onFailure {
         case result => origin ! failure(req,Messages.GENERAL_ERROR(req.data("uid")))	      
@@ -81,10 +81,8 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
  
     case _ => {
 
-      val origin = sender               
       val msg = Messages.REQUEST_IS_UNKNOWN()          
-          
-      origin ! Serializer.serializeResponse(failure(null,msg))
+      log.error(msg)
 
     }
     

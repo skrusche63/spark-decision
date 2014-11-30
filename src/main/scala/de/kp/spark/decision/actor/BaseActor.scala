@@ -58,7 +58,7 @@ abstract class BaseActor extends Actor with ActorLogging {
     val response = new ServiceResponse(req.service,req.task,data,status)	
     
     /* Notify listeners */
-    val message = Serializer.serializeResponse(response)    
+    val message = serialize(response)    
     RemoteContext.notify(message)
     
   }
@@ -78,5 +78,7 @@ abstract class BaseActor extends Actor with ActorLogging {
     }
 
   }
+
+  protected def serialize(resp:ServiceResponse) = Serializer.serializeResponse(resp)
   
 }

@@ -79,7 +79,7 @@ class ModelQuestor extends BaseActor {
             }
           }
              
-          origin ! Serializer.serializeResponse(resp)
+          origin ! resp
           context.stop(self)
           
         }
@@ -88,7 +88,7 @@ class ModelQuestor extends BaseActor {
           
           val msg = Messages.TASK_IS_UNKNOWN(uid,req.task)
           
-          origin ! Serializer.serializeResponse(failure(req,msg))
+          origin ! failure(req,msg)
           context.stop(self)
           
         }
@@ -102,7 +102,7 @@ class ModelQuestor extends BaseActor {
       val origin = sender               
       val msg = Messages.REQUEST_IS_UNKNOWN()          
           
-      origin ! Serializer.serializeResponse(failure(null,msg))
+      origin ! failure(null,msg)
       context.stop(self)
 
     }

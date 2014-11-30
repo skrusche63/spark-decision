@@ -49,7 +49,7 @@ class DecisionIndexer extends BaseActor {
         val response = new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)	
       
         val origin = sender
-        origin ! Serializer.serializeResponse(response)
+        origin ! response
       
       } catch {
         
@@ -60,7 +60,7 @@ class DecisionIndexer extends BaseActor {
           val response = new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
       
           val origin = sender
-          origin ! Serializer.serializeResponse(response)
+          origin ! response
 
         }
       

@@ -74,7 +74,7 @@ class DecisionRegistrar extends BaseActor {
         case throwable:Throwable => failure(req,throwable.getMessage)
       }
       
-      origin ! Serializer.serializeResponse(response)
+      origin ! response
 
     }
     

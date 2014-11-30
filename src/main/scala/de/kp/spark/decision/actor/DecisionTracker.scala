@@ -41,7 +41,7 @@ class DecisionTracker extends BaseActor {
       val response = new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)	
       
       val origin = sender
-      origin ! Serializer.serializeResponse(response)
+      origin ! response
 
       try {
 
