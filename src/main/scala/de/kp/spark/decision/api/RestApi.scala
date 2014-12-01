@@ -54,12 +54,21 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
   val (duration,retries,time) = Configuration.actor   
   val master = system.actorOf(Props(new DecisionMaster(sc)), name="decision-master")
  
+  private val service = "decision"
+    
   def start() {
     RestService.start(routes,system,host,port)
   }
 
   private def routes:Route = {
 
+    path("admin" / Segment) {subject =>  
+	  post {
+	    respondWithStatus(OK) {
+	      ctx => doAdmin(ctx,subject)
+	    }
+	  }
+    }  ~  
     path("get") {
 	  post {
 	    respondWithStatus(OK) {
@@ -71,13 +80,6 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
 	  post {
 	    respondWithStatus(OK) {
 	      ctx => doIndex(ctx)
-	    }
-	  }
-    }  ~  
-    path("status") { 
-	  post {
-	    respondWithStatus(OK) {
-	      ctx => doStatus(ctx)
 	    }
 	  }
     }  ~  
@@ -104,18 +106,29 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
     } 
     
   }
-
-  private def doGet[T](ctx:RequestContext) = doRequest(ctx,"decision","get:feature")
   
-  private def doIndex[T](ctx:RequestContext) = doRequest(ctx,"decision","index:feature")
+  private def doAdmin[T](ctx:RequestContext,subject:String) = {
+    
+    subject match {
+      
+      case "fields" => doRequest(ctx,service,subject)
+      case "status" => doRequest(ctx,service,subject)
+      
+      case _ => {}
+      
+    }
+    
+  }
+
+  private def doGet[T](ctx:RequestContext) = doRequest(ctx,service,"get:feature")
   
-  private def doRegister[T](ctx:RequestContext) = doRequest(ctx,"decision","register")
+  private def doIndex[T](ctx:RequestContext) = doRequest(ctx,service,"index:feature")
+  
+  private def doRegister[T](ctx:RequestContext) = doRequest(ctx,service,"register")
 
-  private def doTrain[T](ctx:RequestContext) = doRequest(ctx,"decision","train")
+  private def doTrain[T](ctx:RequestContext) = doRequest(ctx,service,"train")
 
-  private def doStatus[T](ctx:RequestContext) = doRequest(ctx,"decision","status")
-
-  private def doTrack[T](ctx:RequestContext) = doRequest(ctx,"decision","track")
+  private def doTrack[T](ctx:RequestContext) = doRequest(ctx,service,"track")
   
   private def doRequest[T](ctx:RequestContext,service:String,task:String="train") = {
      

@@ -18,7 +18,7 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import de.kp.spark.core.actor.StatusMonitor
+import de.kp.spark.core.actor.StatusQuestor
 import de.kp.spark.decision.Configuration
 
-class DecisionMonitor extends StatusMonitor(Configuration)
+class StatusMonitor extends StatusQuestor(Configuration)
