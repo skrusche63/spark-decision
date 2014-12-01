@@ -105,7 +105,7 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
     
   }
 
-  private def doGet[T](ctx:RequestContext) = doRequest(ctx,"decision","get:prediction")
+  private def doGet[T](ctx:RequestContext) = doRequest(ctx,"decision","get:feature")
   
   private def doIndex[T](ctx:RequestContext) = doRequest(ctx,"decision","index:feature")
   

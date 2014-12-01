@@ -37,9 +37,9 @@ class ModelQuestor extends BaseActor {
       val origin = sender    
       val uid = req.data("uid")
 
-      req.task match {
+      req.task.split(":")(1) match {
 
-        case "get:prediction" => {
+        case "feature" => {
           /*
            * This request retrieves a set of features and computes
            * the target (or decision) variable 
