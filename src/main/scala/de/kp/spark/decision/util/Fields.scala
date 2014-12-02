@@ -51,7 +51,7 @@ object Fields {
       if (cache.fieldsExist(req)) {     
         
         val fieldspec = cache.fields(req)
-        for (field <- fieldspec.items) {
+        for (field <- fieldspec) {
           
           names += field.name
           types += field.datatype
