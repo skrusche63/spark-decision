@@ -128,7 +128,7 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
 
   private def doTrain[T](ctx:RequestContext) = doRequest(ctx,service,"train")
 
-  private def doTrack[T](ctx:RequestContext) = doRequest(ctx,service,"track")
+  private def doTrack[T](ctx:RequestContext) = doRequest(ctx,service,"track:feature")
   
   private def doRequest[T](ctx:RequestContext,service:String,task:String="train") = {
      
