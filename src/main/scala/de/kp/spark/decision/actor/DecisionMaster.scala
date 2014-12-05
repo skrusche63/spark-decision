@@ -26,6 +26,7 @@ import akka.util.Timeout
 
 import akka.actor.{OneForOneStrategy, SupervisorStrategy}
 
+import de.kp.spark.core.actor._
 import de.kp.spark.core.model._
 
 import de.kp.spark.decision.Configuration
@@ -116,15 +117,15 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
     worker match {
   
       case "builder" => context.actorOf(Props(new ModelBuilder(sc)))  
-      case "fields" => context.actorOf(Props(new FieldMonitor()))        
+      case "fields" => context.actorOf(Props(new FieldQuestor(Configuration)))        
       
       case "indexer" => context.actorOf(Props(new DecisionIndexer()))        
       case "questor" => context.actorOf(Props(new ModelQuestor()))
         
       case "registrar" => context.actorOf(Props(new DecisionRegistrar()))  
-      case "status" => context.actorOf(Props(new StatusMonitor()))        
+      case "status" => context.actorOf(Props(new StatusQuestor(Configuration)))        
 
-      case "tracker" => context.actorOf(Props(new DecisionTracker()))
+      case "tracker" => context.actorOf(Props(new BaseTracker(Configuration)))
       
       case _ => null
       
