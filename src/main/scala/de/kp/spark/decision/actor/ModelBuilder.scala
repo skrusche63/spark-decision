@@ -19,78 +19,33 @@ package de.kp.spark.decision.actor
  */
 
 import org.apache.spark.SparkContext
-
 import akka.actor.{ActorRef,Props}
+
 import akka.pattern.ask
 import akka.util.Timeout
 
-import de.kp.spark.decision.Configuration
+import de.kp.spark.core.Names
 
+import de.kp.spark.core.actor._
 import de.kp.spark.core.model._
+
+import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
-
-  implicit val ec = context.dispatcher
+class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration) {
   
-  def receive = {
+  protected def validate(req:ServiceRequest):Option[String] = {
 
-    case req:ServiceRequest => {
-      
-      val origin = sender    
-      val uid = req.data("uid")
-         
-      val response = validate(req) match {
-            
-        case None => train(req).mapTo[ServiceResponse]            
-        case Some(message) => Future {failure(req,message)}
-            
-      }
-
-      response.onSuccess {
-        case result => {
-              
-          origin ! result
-          context.stop(self)
-              
-        }
-      }
-
-      response.onFailure {
-        case throwable => {           
-            
-          origin ! failure(req,throwable.toString)	                  
-          context.stop(self)
-              
-        }	  
-      }
-      
-    }
-    
-    case _ => {
-      
-      val origin = sender               
-      val msg = Messages.REQUEST_IS_UNKNOWN()          
-          
-      origin ! failure(null,msg)
-      context.stop(self)
-
-    }
-  
-  }
-  
-  private def validate(req:ServiceRequest):Option[String] = {
-
-    val uid = req.data("uid")
+    val uid = req.data(Names.REQ_UID)
     
     if (cache.statusExists(req)) {            
       return Some(Messages.TASK_ALREADY_STARTED(uid))   
     }
 
-    req.data.get("algorithm") match {
+    req.data.get(Names.REQ_ALGORITHM) match {
         
       case None => {
         return Some(Messages.NO_ALGORITHM_PROVIDED(uid))              
@@ -105,7 +60,7 @@ class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
     
     }  
     
-    req.data.get("source") match {
+    req.data.get(Names.REQ_SOURCE) match {
         
       case None => {
         return Some(Messages.NO_SOURCE_PROVIDED(uid))       
@@ -123,9 +78,9 @@ class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
     
   }
  
-  private def actor(req:ServiceRequest):ActorRef = {
+  protected def actor(req:ServiceRequest):ActorRef = {
 
-    val algorithm = req.data("algorithm")
+    val algorithm = req.data(Names.REQ_ALGORITHM)
     if (algorithm == Algorithms.RF) {      
       context.actorOf(Props(new RFActor(sc)))   
       
@@ -134,15 +89,6 @@ class ModelBuilder(@transient val sc:SparkContext) extends BaseActor {
       null
     }
   
-  }
- 
-  private def train(req:ServiceRequest):Future[Any] = {
-
-    val (duration,retries,time) = Configuration.actor      
-    implicit val timeout:Timeout = DurationInt(time).second
-    
-    ask(actor(req), req)
-    
   }
 
 }
