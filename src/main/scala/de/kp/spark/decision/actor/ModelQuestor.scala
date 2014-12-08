@@ -18,6 +18,7 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
 import de.kp.spark.decision.model._
@@ -35,65 +36,51 @@ class ModelQuestor extends BaseActor {
     case req:ServiceRequest => {
       
       val origin = sender    
-      val uid = req.data("uid")
+      val uid = req.data(Names.REQ_UID)
 
-      req.task.split(":")(1) match {
-
-        case "feature" => {
-          /*
-           * This request retrieves a set of features and computes
-           * the target (or decision) variable 
-            */
-          val resp = if (sink.forestExists(uid) == false) {           
-            failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
+      /*
+       * This request retrieves a set of features and computes
+       * the target (or decision) variable 
+       */
+      val resp = if (sink.forestExists(uid) == false) {           
+        failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
             
-          } else {    
+      } else {    
             
-            /* Retrieve path to decision forest for 'uid' from sink */
-            val forest = sink.forest(uid)
-            if (forest == null) {
-              failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
+         /* Retrieve path to decision forest for 'uid' from sink */
+         val forest = sink.forest(uid)
+         if (forest == null) {
+           failure(req,Messages.MODEL_DOES_NOT_EXIST(uid))
               
-            } else {
+         } else {
               
-              if (req.data.contains("features")) {
+            if (req.data.contains(Names.REQ_FEATURES)) {
               
-                try {
+              try {
                 
-                  val model = new RFModel().loadForest(forest)
-                  val decision = model.predict(req.data("features").split(","))
+                val model = new RFModel().loadForest(forest)
+                val decision = model.predict(req.data(Names.REQ_FEATURES).split(","))
 
-                  val data = Map("uid" -> uid, "prediction" -> decision)
-                  new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)
+                val data = Map(Names.REQ_UID -> uid, Names.REQ_RESPONSE -> decision)
+                new ServiceResponse(req.service,req.task,data,DecisionStatus.SUCCESS)
                 
-                } catch {
+              } catch {
                   case e:Exception => {
                     failure(req,e.toString())                   
                   }
-                }
-                
-              } else {
-                failure(req,Messages.MISSING_FEATURES(uid))
-                
               }
+                
+            } else {
+              failure(req,Messages.MISSING_FEATURES(uid))
+                
             }
-          }
-             
-          origin ! resp
-          context.stop(self)
-          
-        }
-        
-        case _ => {
-          
-          val msg = Messages.TASK_IS_UNKNOWN(uid,req.task)
-          
-          origin ! failure(req,msg)
-          context.stop(self)
-          
-        }
+         
+         }
       
       }
+             
+      origin ! resp
+      context.stop(self)
     
     }
     

@@ -19,12 +19,12 @@ package de.kp.spark.decision.actor
  */
 
 import de.kp.spark.core.model._
-import de.kp.spark.core.actor.FeatureRegistrar
+import de.kp.spark.core.actor.BaseRegistrar
 
 import de.kp.spark.decision.Configuration
 import scala.collection.mutable.ArrayBuffer
 
-class DecisionRegistrar extends FeatureRegistrar(Configuration) {
+class DecisionRegistrar extends BaseRegistrar(Configuration) {
   
   override def buildFields(names:Array[String],types:Array[String]):List[Field] = {
         

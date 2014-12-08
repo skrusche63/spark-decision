@@ -90,42 +90,42 @@ class DecisionMaster(@transient val sc:SparkContext) extends BaseActor {
   }
 
   private def execute(req:ServiceRequest):Future[ServiceResponse] = {
-	  
-    req.task.split(":")(0) match {
-
-	  case "fields" => ask(actor("fields"),req).mapTo[ServiceResponse]
-
-	  case "get" => ask(actor("questor"),req).mapTo[ServiceResponse]
-	  case "index" => ask(actor("indexer"),req).mapTo[ServiceResponse]
-
-	  case "train"  => ask(actor("builder"),req).mapTo[ServiceResponse]        
-	  case "status" => ask(actor("status"),req).mapTo[ServiceResponse]
-        
-	  case "register" => ask(actor("registrar"),req).mapTo[ServiceResponse]
-	  case "track"  => ask(actor("tracker"),req).mapTo[ServiceResponse]
-       
-      case _ => Future {     
-        failure(req,Messages.TASK_IS_UNKNOWN(req.data("uid"),req.task))
-      }
+	
+    try {
       
-    }
+      val task = req.task.split(":")(0)
+      ask(actor(task),req).mapTo[ServiceResponse]
     
+    } catch {
+      
+      case e:Exception => {
+        Future {failure(req,e.getMessage)}         
+      }
+    
+    }
+     
   }
   
   private def actor(worker:String):ActorRef = {
     
     worker match {
-  
-      case "builder" => context.actorOf(Props(new ModelBuilder(sc)))  
-      case "fields" => context.actorOf(Props(new FieldQuestor(Configuration)))        
-      
-      case "indexer" => context.actorOf(Props(new DecisionIndexer()))        
-      case "questor" => context.actorOf(Props(new ModelQuestor()))
+      /*
+       * Metadata management is part of the core functionality; field or metadata
+       * specifications can be registered in, and retrieved from a Redis database.
+       */
+      case "fields"   => context.actorOf(Props(new FieldQuestor(Configuration)))
+      case "register" => context.actorOf(Props(new DecisionRegistrar()))  
+      /*
+       * Index management is part of the core functionality; an Elasticsearch 
+       * index can be created and appropriate (tracked) items can be saved.
+       */  
+      case "index" => context.actorOf(Props(new BaseIndexer(Configuration)))        
+      case "track" => context.actorOf(Props(new BaseTracker(Configuration)))
         
-      case "registrar" => context.actorOf(Props(new DecisionRegistrar()))  
       case "status" => context.actorOf(Props(new StatusQuestor(Configuration)))        
-
-      case "tracker" => context.actorOf(Props(new BaseTracker(Configuration)))
+      
+      case "get"   => context.actorOf(Props(new ModelQuestor()))
+      case "train" => context.actorOf(Props(new ModelBuilder(sc)))  
       
       case _ => null
       
