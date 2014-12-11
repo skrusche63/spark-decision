@@ -227,7 +227,7 @@ class RF(
    * The core function to grow an un-pruning tree
    */
   def growTree(data: Array[Instance], branch: String = ""): Elem = {
-
+    
     var attList = List[AttributeInfo]()
     
     /*
@@ -245,7 +245,6 @@ class RF(
         <decision p="1">{ data(0).label }</decision>
       </node>
     } else {
-      
       /*
        * Entropy of the labels is not zero
        */      
@@ -286,7 +285,10 @@ class RF(
         var priorDecision = ""
         val fid = indexes(chosen.indice)
         if (types(fid) == "N") {
-          /* numerical attribute */
+          /* Process numerical attribute; in this case we are interested in the
+           * split point of the respective attribute and distinguish child nodes
+           * as those that are below ('low') and above ('high')
+           */
           val splitPoint = chosen.attributeValues(0).toDouble
           val lochilddata = data.filter { obs =>
             val j = obs.features(chosen.indice)
@@ -361,7 +363,6 @@ class RF(
         
         indexes = randIndexes(m, M)
         val oob = baggingAndSelectFeatures(partial)
-
         growTree(oob)
 
       }
@@ -399,10 +400,11 @@ object RF {
        */
       val M = names.length
       if (m < M) {
-        new RF(missValue,names,types,numTree,M,m).run(data)
+       println("Before RF 1: " + m)
+         new RF(missValue,names,types,numTree,M,m).run(data)
       
       } else {
-        
+        println("Before RF 2: " + M)
         new RF(missValue,names,types,numTree,M,M).run(data)
       }
     }

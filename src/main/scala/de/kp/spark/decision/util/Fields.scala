@@ -44,6 +44,7 @@ object Fields {
     val types = ArrayBuffer.empty[String]
 
     try {
+      
       /*
        * First we try to retrieve the feature specification from the
        * Redis instance, i.e. dynamic first 
@@ -59,6 +60,7 @@ object Fields {
         }  
     
       } else {
+        
         /*
          * Future: Distinguish between different templates of
          * feature specification
@@ -76,7 +78,7 @@ object Fields {
       }
       
     } catch {
-      case e:Exception => {}
+      case e:Exception => e.printStackTrace()
     }
     
     (names,types)

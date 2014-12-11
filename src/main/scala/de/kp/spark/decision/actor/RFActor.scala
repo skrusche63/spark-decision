@@ -23,6 +23,7 @@ import org.apache.spark.rdd.RDD
 
 import java.util.Date
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
 import de.kp.spark.decision.Configuration
@@ -33,6 +34,8 @@ import de.kp.spark.decision.tree.RF
 
 import de.kp.spark.decision.sink.RedisSink
 import de.kp.spark.decision.util.Fields
+
+import scala.collection.mutable.ArrayBuffer
 
 class RFActor(@transient val sc:SparkContext) extends BaseActor {
   
@@ -50,8 +53,6 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
       sender ! response(req, missing)
 
       if (missing == false) {
-        /* Register status */
-        cache.addStatus(req,DecisionStatus.STARTED)
  
         try {
 
@@ -80,8 +81,16 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
   }
   
   private def buildForest(req:ServiceRequest,dataset:RDD[Instance],params:(Int,Int,String)) {
+    
+    /**
+     * The training request must provide a name for the random forest 
+     * to uniquely distinguish this forest from all others
+     */
+    val name = if (req.data.contains(Names.REQ_NAME)) req.data(Names.REQ_NAME) 
+      else throw new Exception("No name for decision trees provided.")
 
-    cache.addStatus(req,DecisionStatus.DATASET)
+    /* Register status */
+    cache.addStatus(req,DecisionStatus.MODEL_TRAINING_STARTED)
           
     val (m,trees,miss) = params        
     val (names,types)  = Fields.get(req)
@@ -92,7 +101,8 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
     val model = RF.train(dataset,names.tail.toArray,types.tail.toArray, miss, m, trees)
 
     val now = new Date()
-    val dir = base + "/rf-" + now.getTime().toString
+    val dir = String.format("""%s/matrix/%s/%s""",base,name,now.getTime().toString)
+    
     /* Save model in directory of file system */
     model.save(dir)
     
@@ -100,22 +110,33 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
     sink.addForest(req,dir)
           
     /* Update cache */
-    cache.addStatus(req,DecisionStatus.FINISHED)
+    cache.addStatus(req,DecisionStatus.MODEL_TRAINING_FINISHED)
     
     /* Notify potential listeners */
-    notify(req,DecisionStatus.FINISHED)
+    notify(req,DecisionStatus.MODEL_TRAINING_FINISHED)
     
   }
   
+  /**
+   * This private method retrieves the model parameters from the request
+   * and also registers these in the Redis cache
+   */
   private def properties(req:ServiceRequest):(Int,Int,String) = {
       
     try {
       
+      val params = ArrayBuffer.empty[Param]
+      
       val m = req.data("num_selected_features").toInt
+      params += Param("num_selected_features","integer",req.data("num_selected_features"))
+      
       val trees = req.data("trees_per_node").toInt
+      params += Param("trees_per_node","integer",req.data("trees_per_node"))
 
       val miss = req.data("miss_valu")
-        
+      params += Param("miss_valu","integer",req.data("miss_valu"))
+      
+      cache.addParams(req, params.toList)
       return (m,trees,miss)
         
     } catch {

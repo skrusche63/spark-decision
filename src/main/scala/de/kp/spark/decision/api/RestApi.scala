@@ -142,23 +142,68 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
    * 'fields' and 'register' requests refer to the metadata management of the
    * Decision Analysis engine; for a certain task (uid) and a specific model 
    * (name), a specification of the respective data fields can be registered 
-   * and retrieved from a Redis database.
+   * and retrieved from a Redis database: Request parameters for the 'fields' 
+   * request:
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
    */
   private def doFields[T](ctx:RequestContext) = doRequest(ctx,service,"fields")
-  
+  /**
+   * Request parameters for the 'register' request:
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
+   * - names (String, comma separated list of feature names)
+   * - types (String, comma separated list of feature types)
+   * 
+   */  
   private def doRegister[T](ctx:RequestContext) = doRequest(ctx,service,"register:feature")
   /**
    * 'index' & 'track' requests support data registration in an Elasticsearch
    * index; while items are can be provided via the REST interface, rules are
    * built by the Decision Analysis engine and then registered in the index.
-   */
+   * 
+   * Request parameters for the 'index' request:
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
+   * - source (String)
+   * - type (String)
+   * 
+   * - names (String, comma separated list of feature names)
+   * - types (String, comma separated list of feature types)
+   * 
+   */  
   private def doIndex[T](ctx:RequestContext) = doRequest(ctx,service,"index:feature")
-
+  /**
+   * Request parameters for the 'track' request:
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
+   * - source (String)
+   * - type (String)
+   * 
+   * - lbl. xxx (String, target value)
+   * - fea. xxx (Double, predictor value) 
+   * 
+   */  
   private def doTrack[T](ctx:RequestContext) = doRequest(ctx,service,"track:feature")
   /**
-   * 'status' is an administration request to determine whether a certain data
-   * mining task has been finished or not; the only parameter required for status 
-   * requests is the unique identifier of a certain task
+   * 'status' is an administration request to determine whether a forest building
+   * task has been finished or not: Request parameters for the 'status' request
+   * 
+   * - site (String)
+   * - uid (String)
+   * 
    */
   private def doStatus[T](ctx:RequestContext,subject:String) = {
     
@@ -180,8 +225,34 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
   
   }
 
+  /**
+   * Request parameters for the 'get' request:
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
+   * - features (String, comma separated list of feature values)
+   * 
+   */  
   private def doGet[T](ctx:RequestContext) = doRequest(ctx,service,"get:feature")
 
+  /**
+   * Request parameters for the 'train' request
+   * 
+   * - site (String)
+   * - uid (String)
+   * - name (String)
+   * 
+   * - source (String)
+   * 
+   * and the model building parameters are
+   * 
+   * - num_selected_features (Integer)
+   * - trees_per_node (Integer)
+   * - miss_valu (String
+   * 
+   */
   private def doTrain[T](ctx:RequestContext) = doRequest(ctx,service,"train")
   
   private def doRequest[T](ctx:RequestContext,service:String,task:String) = {

@@ -36,7 +36,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration) {
-  
+
   protected def validate(req:ServiceRequest):Option[String] = {
 
     val uid = req.data(Names.REQ_UID)
@@ -44,21 +44,6 @@ class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration
     if (cache.statusExists(req)) {            
       return Some(Messages.TASK_ALREADY_STARTED(uid))   
     }
-
-    req.data.get(Names.REQ_ALGORITHM) match {
-        
-      case None => {
-        return Some(Messages.NO_ALGORITHM_PROVIDED(uid))              
-      }
-        
-      case Some(algorithm) => {
-        if (Algorithms.isAlgorithm(algorithm) == false) {
-          return Some(Messages.ALGORITHM_IS_UNKNOWN(uid,algorithm))    
-        }
-          
-      }
-    
-    }  
     
     req.data.get(Names.REQ_SOURCE) match {
         
@@ -78,17 +63,10 @@ class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration
     
   }
  
-  protected def actor(req:ServiceRequest):ActorRef = {
-
-    val algorithm = req.data(Names.REQ_ALGORITHM)
-    if (algorithm == Algorithms.RF) {      
-      context.actorOf(Props(new RFActor(sc)))   
-      
-    } else {
-      /* do nothing */
-      null
-    }
-  
-  }
+  /**
+   * Decision Analysis supports a single algorithm, 
+   * i.e Random  Decision Trees (Forest)
+   */
+  protected def actor(req:ServiceRequest):ActorRef = context.actorOf(Props(new RFActor(sc)))
 
 }
