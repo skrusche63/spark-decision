@@ -244,7 +244,19 @@ class RestApi(host:String,port:Int,system:ActorSystem,@transient val sc:SparkCon
    * - uid (String)
    * - name (String)
    * 
-   * - source (String)
+   * - source (String, ELASTIC, FILE, JDBC)
+   * 
+   * and the following parameters depend on the selected source:
+   * 
+   * ELASTIC:
+   * 
+   * - source.index (String)
+   * - source.type (String)
+   * - query (String)
+   * 
+   * JDBC:
+   * 
+   * - query (String)
    * 
    * and the model building parameters are
    * 
