@@ -44,6 +44,7 @@ class DecisionMaster(@transient sc:SparkContext) extends BaseMaster(Configuratio
       case "index" => context.actorOf(Props(new BaseIndexer(Configuration)))        
       case "track" => context.actorOf(Props(new BaseTracker(Configuration)))
         
+      case "params" => context.actorOf(Props(new ParamQuestor(Configuration)))        
       case "status" => context.actorOf(Props(new StatusQuestor(Configuration)))        
       
       case "get"   => context.actorOf(Props(new ModelQuestor()))
