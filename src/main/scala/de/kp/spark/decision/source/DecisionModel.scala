@@ -97,5 +97,37 @@ class DecisionModel(@transient sc:SparkContext) extends Serializable {
     })
 
   }
+  
+  def buildParquet(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[Instance] = {
+    
+    val (names,types) = Fields.get(req)    
+    
+    val bcnames = sc.broadcast(names)
+    val bctypes = sc.broadcast(types)
+    
+    rawset.map(data => {
+     
+      val label = data(bcnames.value.head).asInstanceOf[String]
+      val features = ArrayBuffer.empty[String]
+      
+      for (name <- bcnames.value.tail) {
+        
+        val ftype = bctypes.value(bcnames.value.indexOf(name))
+        val feature = if (ftype == "C") {
+          data(name).asInstanceOf[String]
+        
+        } else {
+          data(name).asInstanceOf[Double]
+        
+        }
+        
+        features += feature.toString
+      }
+      
+      new Instance(label,features.toArray)
+      
+    })
+
+  }
 
 }

@@ -18,36 +18,16 @@ package de.kp.spark.decision.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import akka.actor.{Actor,ActorLogging}
+import de.kp.spark.core.Names
+import de.kp.spark.core.actor.RootActor
 
 import de.kp.spark.core.model._
-import de.kp.spark.core.redis.RedisCache
 
 import de.kp.spark.decision.{Configuration,RemoteContext}
 import de.kp.spark.decision.model._
 
-abstract class BaseActor extends Actor with ActorLogging {
-
-  val (host,port) = Configuration.redis
-  val cache = new RedisCache(host,port.toInt)
+abstract class BaseActor extends RootActor(Configuration) {
   
-  /**
-   * Build service response in case of a failure
-   */
-  protected def failure(req:ServiceRequest,message:String):ServiceResponse = {
-    
-    if (req == null) {
-      val data = Map("message" -> message)
-      new ServiceResponse("","",data,DecisionStatus.FAILURE)	
-      
-    } else {
-      val data = Map("uid" -> req.data("uid"), "message" -> message)
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.FAILURE)	
-    
-    }
-    
-  }
-
   /**
    * Notify all registered listeners about a certain status
    */
@@ -73,12 +53,10 @@ abstract class BaseActor extends Actor with ActorLogging {
   
     } else {
       val data = Map("uid" -> uid, "message" -> Messages.MODEL_BUILDING_STARTED(uid))
-      new ServiceResponse(req.service,req.task,data,DecisionStatus.STARTED)	
+      new ServiceResponse(req.service,req.task,data,DecisionStatus.MODEL_TRAINING_STARTED)	
   
     }
 
   }
-
-  protected def serialize(resp:ServiceResponse) = Serializer.serializeResponse(resp)
   
 }

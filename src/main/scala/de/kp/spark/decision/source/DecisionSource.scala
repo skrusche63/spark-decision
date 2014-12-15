@@ -21,7 +21,7 @@ package de.kp.spark.decision.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
+import de.kp.spark.core.source._
 
 import de.kp.spark.core.model._
 
@@ -57,11 +57,10 @@ class DecisionSource(@transient sc:SparkContext) {
        */    
       case Sources.FILE => {
  
-        val rawset = new FileSource(sc).connect(config.file(0),req)
+        val rawset = new FileSource(sc).connect(config.input(0),req)
         model.buildFile(req,rawset)
          
-      }
-      
+      }      
       /* 
        * Build decision model from features persisted as an appropriate 
        * table from a JDB database; the configuration parameters are 
@@ -74,6 +73,19 @@ class DecisionSource(@transient sc:SparkContext) {
         
         val rawset = new JdbcSource(sc).connect(config,req,names.toList)
         model.buildJDBC(req,rawset)
+        
+      }
+      /* 
+       * Build decision model from features persisted as a parquet file; 
+       * the configuration parameters are retrieved from the service 
+       * configuration 
+       */
+      case Sources.PARQUET => {
+
+        val (names,types) = Fields.get(req)    
+        
+        val rawset = new ParquetSource(sc).connect(config.input(0),req,names.toList)
+        model.buildParquet(req,rawset)
         
       }
             

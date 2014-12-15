@@ -49,31 +49,27 @@ object Sources {
   val FILE:String    = "FILE"
   val ELASTIC:String = "ELASTIC" 
   val JDBC:String    = "JDBC"   
+  val PARQUET:String = "PARQUET"
 
-  private val sources = List(ELASTIC,FILE,JDBC)
+  private val sources = List(ELASTIC,FILE,JDBC,PARQUET)
   def isSource(source:String):Boolean = sources.contains(source)
     
 }
 
 object Messages extends BaseMessages {
- 
-  def DATA_TO_TRACK_RECEIVED(uid:String):String = String.format("""Data to track received for uid '%s'.""", uid)
   
-  def MISSING_FEATURES(uid:String):String = String.format("""Features are missing for uid '%s'.""", uid)
+  def MISSING_FEATURES(uid:String):String = 
+    String.format("""[UID: %s] Features are missing.""", uid)
 
-  def MISSING_PARAMETERS(uid:String):String = String.format("""Parameters are missing for uid '%s'.""", uid)
+  def MISSING_PARAMETERS(uid:String):String = 
+    String.format("""[UID: %s] Parameters are missing.""", uid)
 
-  def MODEL_BUILDING_STARTED(uid:String) = String.format("""Top-K Association Rule Mining started for uid '%s'.""", uid)
+  def MODEL_BUILDING_STARTED(uid:String) = 
+    String.format("""[UID: %s] Top-K Association Rule Mining started.""", uid)
 
-  def MODEL_DOES_NOT_EXIST(uid:String):String = String.format("""Model does not exist for uid '%s'.""", uid)
+  def MODEL_DOES_NOT_EXIST(uid:String):String = 
+    String.format("""[UID: %s] Model does not exist.""", uid)
   
 }
 
-object DecisionStatus extends BaseStatus {
-  
-  val DATASET:String = "dataset"
-    
-  val STARTED:String = "started"
-  val FINISHED:String = "finished"
-    
-}
+object DecisionStatus extends BaseStatus
