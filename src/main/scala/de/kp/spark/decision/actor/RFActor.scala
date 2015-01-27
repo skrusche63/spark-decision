@@ -101,7 +101,7 @@ class RFActor(@transient val sc:SparkContext) extends BaseActor {
     val model = RF.train(dataset,names.tail.toArray,types.tail.toArray, miss, m, trees)
 
     val now = new Date()
-    val dir = String.format("""%s/matrix/%s/%s""",base,name,now.getTime().toString)
+    val dir = String.format("""%s/%s/%s/%s""",base,name,now.getTime().toString)
     
     /* Save model in directory of file system */
     model.save(dir)
