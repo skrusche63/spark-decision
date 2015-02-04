@@ -44,18 +44,6 @@ object Algorithms {
   
 }
 
-object Sources {
-  /* The names of the data source actually supported */
-  val FILE:String    = "FILE"
-  val ELASTIC:String = "ELASTIC" 
-  val JDBC:String    = "JDBC"   
-  val PARQUET:String = "PARQUET"
-
-  private val sources = List(ELASTIC,FILE,JDBC,PARQUET)
-  def isSource(source:String):Boolean = sources.contains(source)
-    
-}
-
 object Messages extends BaseMessages {
   
   def MISSING_FEATURES(uid:String):String = 
