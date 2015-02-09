@@ -1,0 +1,6 @@
+<fieldspec>
+	<field name="row" type="long">row</field>
+	<field name="col" type="long">col</field>
+	<field name="val" type="double">value</field>
+	<field name="cat" type="string">type</field>
+</fieldspec>

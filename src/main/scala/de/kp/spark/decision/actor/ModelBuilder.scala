@@ -44,6 +44,21 @@ class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration
     if (cache.statusExists(req)) {            
       return Some(Messages.TASK_ALREADY_STARTED(uid))   
     }
+
+    req.data.get(Names.REQ_ALGORITHM) match {
+        
+      case None => {
+        return Some(Messages.NO_ALGORITHM_PROVIDED(uid))              
+      }
+        
+      case Some(algorithm) => {
+        if (Algorithms.isAlgorithm(algorithm) == false) {
+          return Some(Messages.ALGORITHM_IS_UNKNOWN(uid,algorithm))    
+        }
+          
+      }
+    
+    }  
     
     req.data.get(Names.REQ_SOURCE) match {
         
@@ -67,6 +82,20 @@ class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration
    * Decision Analysis supports a single algorithm, 
    * i.e Random  Decision Trees (Forest)
    */
-  protected def actor(req:ServiceRequest):ActorRef = context.actorOf(Props(new RFActor(sc)))
+  protected def actor(req:ServiceRequest):ActorRef = {
+ 
+    val algorithm = req.data(Names.REQ_ALGORITHM)
+    if (algorithm == Algorithms.GBT) {      
+      context.actorOf(Props(new GBTActor(sc)))   
+
+    } else if (algorithm == Algorithms.RF) {
+      context.actorOf(Props(new RFActor(sc)))   
+      
+    } else {
+      /* do nothing */
+      null
+    }
+   
+  }
 
 }

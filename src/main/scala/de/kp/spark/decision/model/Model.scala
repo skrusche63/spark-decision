@@ -36,10 +36,12 @@ case class Instance(label: String, features: Array[String]) {
 object Serializer extends BaseSerializer 
 
 object Algorithms {
-  /* The value of the algorithms actually supported */
+
+  val GBT:String = "GBT"
+    
   val RF:String = "RF"
   
-  private val algorithms = List(RF)
+  private val algorithms = List(GBT,RF)
   def isAlgorithm(algorithm:String):Boolean = algorithms.contains(algorithm)
   
 }
