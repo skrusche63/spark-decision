@@ -31,7 +31,7 @@ import org.apache.spark.mllib.tree.configuration.{Algo,Strategy}
 
 object DT extends Serializable {
   
-  def trainDT(dataset:RDD[LabeledPoint],categoricalFeatureInfo:Map[Int,Int],params:Map[String,String]):(DecisionTreeModel,Double) = {
+  def trainTree(dataset:RDD[LabeledPoint],categorical_info:Map[Int,Int],num_classes:Int,params:Map[String,String]):(DecisionTreeModel,Double) = {
 
     val algo_type = if (params.contains("algorithm_type")) params("algorithm_type") else ""
     if (algo_type == "") new Exception("Algorithm type is not provided.")
@@ -41,11 +41,7 @@ object DT extends Serializable {
 
     val num_trees = params("num_trees").toInt
     require(num_trees == 1)
-    /*
-     * Number of classes for classification (Ignored for regression)
-     * Default value is 2 (binary classification).
-     */    
-    val num_classes = if (params.contains("num_classes")) params("num_classes").toInt else 2
+
     /*
      * Maximum number of bins used for discretizing continuous features and
      * for choosing how to split on features at each node. More bins give higher 
@@ -88,8 +84,8 @@ object DT extends Serializable {
      * 
      * It's important to note that features are zero-indexed.
      */
-    if (categoricalFeatureInfo.empty == false)
-      strategy.setCategoricalFeaturesInfo(categoricalFeatureInfo)
+    if (categorical_info.empty == false)
+      strategy.setCategoricalFeaturesInfo(categorical_info)
 
     val model = DecisionTree.train(dataset,strategy)
     val accuracy = if (algo_type == "Classification") {
@@ -107,7 +103,7 @@ object DT extends Serializable {
     
   }
 
-  def trainRF(dataset:RDD[LabeledPoint],categoricalFeatureInfo:Map[Int,Int],params:Map[String,String]):(RandomForestModel,Double) = {
+  def trainForest(dataset:RDD[LabeledPoint],categorical_info:Map[Int,Int],num_classes:Int,params:Map[String,String]):(RandomForestModel,Double) = {
 
     val algo_type = if (params.contains("algorithm_type")) params("algorithm_type") else ""
     if (algo_type == "") new Exception("Algorithm type is not provided.")
@@ -117,11 +113,6 @@ object DT extends Serializable {
 
     val num_trees = params("num_trees").toInt
     require(num_trees > 1)
-    /*
-     * Number of classes for classification (Ignored for regression)
-     * Default value is 2 (binary classification).
-     */    
-    val num_classes = if (params.contains("num_classes")) params("num_classes").toInt else 2
     /*
      * Maximum number of bins used for discretizing continuous features and
      * for choosing how to split on features at each node. More bins give higher 
@@ -174,8 +165,8 @@ object DT extends Serializable {
      * 
      * It's important to note that features are zero-indexed.
      */
-    if (categoricalFeatureInfo.empty == false)
-      strategy.setCategoricalFeaturesInfo(categoricalFeatureInfo)
+    if (categorical_info.empty == false)
+      strategy.setCategoricalFeaturesInfo(categorical_info)
     
     /*
      * Random seed for bootstrapping and choosing feature subsets.

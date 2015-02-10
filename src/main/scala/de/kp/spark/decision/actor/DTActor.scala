@@ -34,13 +34,12 @@ import de.kp.spark.core.source.handler.LabeledPointHandler
 import de.kp.spark.decision.Configuration
 
 import de.kp.spark.decision.model._
-import de.kp.spark.decision.tree.{GBT,GBTHandler,GBTUtil}
+import de.kp.spark.decision.tree.{DT,DTHandler,DTUtil}
 
 import de.kp.spark.decision.spec.PointSpec
-
 import scala.collection.mutable.ArrayBuffer
 
-class GBTActor(@transient val sc:SparkContext) extends BaseActor {
+class DTActor(@transient val sc:SparkContext) extends BaseActor {
   
   private val config = Configuration
   private val (base,info) = config.tree
@@ -62,9 +61,9 @@ class GBTActor(@transient val sc:SparkContext) extends BaseActor {
         try {
 
           val source = new PointSource(sc,config,new PointSpec(req))
-          val (trainset,num_classes) = GBTHandler.format(source.connect(req))
+          val (trainset,categorical_info,num_classes) = DTHandler.format(source.connect(req))
 
-          train(req,trainset,num_classes,params)
+          train(req,trainset,categorical_info,num_classes,params)
           
         } catch {
           case e:Exception => cache.addStatus(req,DecisionStatus.FAILURE)          
@@ -82,10 +81,9 @@ class GBTActor(@transient val sc:SparkContext) extends BaseActor {
       context.stop(self)
       
     }
-    
+
   }
-  
-  private def train(req:ServiceRequest,dataset:RDD[regression.LabeledPoint],num_classes:Long,params:Map[String,String]) {
+  private def train(req:ServiceRequest,dataset:RDD[regression.LabeledPoint],categorical_info:Map[Int,Int],num_classes:Long,params:Map[String,String]) {
     
     /**
      * The training request must provide a name for the Gradient Boosted 
@@ -97,16 +95,37 @@ class GBTActor(@transient val sc:SparkContext) extends BaseActor {
     /* Register status */
     cache.addStatus(req,DecisionStatus.MODEL_TRAINING_STARTED)
     
-    val (model,accuracy) = GBT.train(dataset,num_classes,params)
+    val num_trees = req.data("num_trees").toInt
+    if (num_trees == 1) {
 
-    val now = new java.util.Date()
-    val store = String.format("""%s/%s/%s/%s""",base,name,now.getTime().toString)
+      val (model,accuracy) = DT.trainTree(dataset,categorical_info,num_classes.toInt,params)
+
+      val now = new java.util.Date()
+      val store = String.format("""%s/%s/%s/%s""",base,name,now.getTime().toString)
     
-    /* Save model in directory of file system */
-    GBTUtil.writeModel(store, model,accuracy,num_classes.toInt,params)
+      /* Save model in directory of file system */
+      DTUtil.writeDTModel(store, model, accuracy, categorical_info,num_classes.toInt,params)
     
-    /* Put directory to sink for later requests */
-    redis.addModel(req,store)
+      /* Put directory to sink for later requests */
+      redis.addModel(req,store)
+      
+    } else if (num_trees > 1) {
+
+      val (model,accuracy) = DT.trainForest(dataset,categorical_info,num_classes.toInt,params)
+
+      val now = new java.util.Date()
+      val store = String.format("""%s/%s/%s/%s""",base,name,now.getTime().toString)
+    
+      /* Save model in directory of file system */
+      DTUtil.writeRFModel(store, model, accuracy, categorical_info,num_classes.toInt,params)
+    
+      /* Put directory to sink for later requests */
+      redis.addModel(req,store)
+      
+    } else {
+      throw new Exception("Illegal number of trees provided.")
+    
+    }
     
     /* Update cache */
     cache.addStatus(req,DecisionStatus.MODEL_TRAINING_FINISHED)
@@ -129,12 +148,27 @@ class GBTActor(@transient val sc:SparkContext) extends BaseActor {
       val algo_types = List("Classification","Regression")
       if (algo_types.contains(algo_type) == false) throw new Exception("Algorithm type is not supported.")
 
+      /*
+       * Maximum depth of the tree. E.g., depth 0 means 1 leaf node; 
+       * depth 1 means 1 internal node + 2 leaf nodes.
+       */
       val max_depth = if (req.data.contains("max_depth")) req.data("max_depth").toInt else 5
       params += Param("max_depth","integer",req.data("max_depth"))
-      
-      val max_iterations = if (req.data.contains("max_iterations")) req.data("max_iterations").toInt else 20
-      params += Param("max_iterations","integer",req.data("max_iterations"))
-     
+      /*
+       * Maximum number of bins used for discretizing continuous features and
+       * for choosing how to split on features at each node. More bins give higher 
+       * granularity.
+       */
+      val max_bins = if (req.data.contains("max_bins")) req.data("max_bins").toInt else 32
+      params += Param("max_bins","integer",req.data("max_bins"))
+
+      /* Criterion used for information gain calculation */
+      val impurity_type = req.data("impurity_type")
+      params += Param("impurity_type","string",req.data("impurity_type"))
+
+      val num_trees = req.data("num_trees").toInt
+      params += Param("num_trees","integer",req.data("num_trees"))
+
       cache.addParams(req, params.toList)
       req.data
         

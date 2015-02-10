@@ -28,6 +28,8 @@ import de.kp.spark.decision.model._
 
 abstract class BaseActor extends RootActor(Configuration) {
   
+  val (host,port) = Configuration.redis
+  
   /**
    * Notify all registered listeners about a certain status
    */

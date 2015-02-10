@@ -26,29 +26,38 @@ import org.apache.hadoop.fs.{FileSystem,Path}
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 
+private class GBTStruct(
+  val model:GradientBoostedTreesModel,
+  val accuracy:Double,
+  val num_classes:Int,
+  val params:Map[String,String]
+) extends Serializable {}
+
 object GBTUtil {
   
-  def readModel(store:String):GradientBoostedTreesModel = {
+  def readModel(store:String):(GradientBoostedTreesModel,Double,Int,Map[String,String]) = {
 
     val conf = new HadoopConf()
 	val fs = FileSystem.get(conf)
     
     val ois = new ObjectInputStream(fs.open(new Path(store)))
-    val model = ois.readObject().asInstanceOf[GradientBoostedTreesModel]
+    val struct = ois.readObject().asInstanceOf[GBTStruct]
       
     ois.close()
     
-    model
+    (struct.model,struct.accuracy,struct.num_classes,struct.params)
     
   }
 
-  def writeModel(store:String,model:GradientBoostedTreesModel) {
+  def writeModel(store:String,model:GradientBoostedTreesModel,accuracy:Double,num_classes:Int,params:Map[String,String]) {
+    
+    val struct = new GBTStruct(model,accuracy,num_classes,params)
     
     val conf = new HadoopConf()
 	val fs = FileSystem.get(conf)
 
     val oos = new ObjectOutputStream(fs.create(new Path(store)))   
-    oos.writeObject(model)
+    oos.writeObject(struct)
     
     oos.close
     
