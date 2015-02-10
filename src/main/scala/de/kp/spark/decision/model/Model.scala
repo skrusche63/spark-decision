@@ -18,30 +18,17 @@ package de.kp.spark.decision.model
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.json4s._
-
-import org.json4s.native.Serialization
-import org.json4s.native.Serialization.{read,write}
-
 import de.kp.spark.core.model._
-
-case class Instance(label: String, features: Array[String]) {
-
-  override def toString: String = {
-    "Observation(%s, %s)".format(label, features.mkString("[", ", ", "]"))
-  }
-
-}
 
 object Serializer extends BaseSerializer 
 
 object Algorithms {
-
-  val GBT:String = "GBT"
     
-  val RF:String = "RF"
+  val DT:String  = "DT"
+  val GBT:String = "GBT"
+  val RF:String  = "RF"
   
-  private val algorithms = List(GBT,RF)
+  private val algorithms = List(DT,GBT,RF)
   def isAlgorithm(algorithm:String):Boolean = algorithms.contains(algorithm)
   
 }

@@ -88,8 +88,8 @@ class ModelBuilder(@transient sc:SparkContext) extends BaseTrainer(Configuration
     if (algorithm == Algorithms.GBT) {      
       context.actorOf(Props(new GBTActor(sc)))   
 
-    } else if (algorithm == Algorithms.RF) {
-      context.actorOf(Props(new RFActor(sc)))   
+    } else if (algorithm == Algorithms.DT | algorithm == Algorithms.RF) {
+      context.actorOf(Props(new DTActor(sc)))   
       
     } else {
       /* do nothing */
