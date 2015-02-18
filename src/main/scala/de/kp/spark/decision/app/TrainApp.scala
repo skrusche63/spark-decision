@@ -23,9 +23,6 @@ import org.apache.spark.SparkContext
 import akka.actor._
 import com.typesafe.config.ConfigFactory
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-
 import org.clapper.argot._
 
 import de.kp.spark.core.Names
@@ -41,8 +38,6 @@ import de.kp.spark.decision.model._
 
 import scala.concurrent.duration.DurationInt
 import scala.collection.mutable.HashMap
-
-case class Start()
 
 object TrainApp extends SparkService {
   
@@ -152,12 +147,14 @@ object TrainApp extends SparkService {
         params += "impurity_type" -> cfg.getString("impurity_type")
         params += "max_depth" -> cfg.getInt("max_depth").toString
 
+        params += "source" -> cfg.getString("source")
+
       }
       
     }
     
     /* Add timestamp as global parameter */
-    params += "timestamp" -> new DateTime().getMillis.toString
+    params += "timestamp" -> new java.util.Date().getTime.toString
     params.toMap
     
   }
