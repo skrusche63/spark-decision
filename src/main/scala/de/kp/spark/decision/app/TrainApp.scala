@@ -66,9 +66,7 @@ object TrainApp extends SparkService {
     
     try {
       
-      val test_params = Array("--key","k123","--uid","u123","--config","config.conf")    
-      
-      val req_params = createParams(args++test_params)
+      val req_params = createParams(args)
       val req = new ServiceRequest("decision","train:model",req_params)
       
       val actor = system.actorOf(Props(new Handler(sc)))   
@@ -106,6 +104,8 @@ object TrainApp extends SparkService {
     val site = parser.option[String](List("key"),"key","Unique application key")
     val uid = parser.option[String](List("uid"),"uid","Unique job identifier")
 
+    val name = parser.option[String](List("name"),"name","Unique job designator")
+
     val config = parser.option[String](List("config"),"config","Configuration file")
     parser.parse(args)
 
@@ -124,6 +124,13 @@ object TrainApp extends SparkService {
       
       case None => parser.usage("Parameter 'uid' is missing.")
       case Some(value) => params += "uid" -> value
+      
+    }
+    
+    name.value match {
+      
+      case None => parser.usage("Parameter 'name' is missing.")
+      case Some(value) => params += "name" -> value
       
     }
 
