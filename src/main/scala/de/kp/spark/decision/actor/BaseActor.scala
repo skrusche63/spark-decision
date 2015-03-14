@@ -23,27 +23,12 @@ import de.kp.spark.core.actor.RootActor
 
 import de.kp.spark.core.model._
 
-import de.kp.spark.decision.{Configuration,RemoteContext}
+import de.kp.spark.decision.Configuration
 import de.kp.spark.decision.model._
 
 abstract class BaseActor extends RootActor(Configuration) {
   
   val (host,port) = Configuration.redis
-  
-  /**
-   * Notify all registered listeners about a certain status
-   */
-  protected def notify(req:ServiceRequest,status:String) {
-
-    /* Build message */
-    val data = Map("uid" -> req.data("uid"))
-    val response = new ServiceResponse(req.service,req.task,data,status)	
-    
-    /* Notify listeners */
-    val message = serialize(response)    
-    RemoteContext.notify(message)
-    
-  }
   
   protected def response(req:ServiceRequest,missing:Boolean):ServiceResponse = {
     
